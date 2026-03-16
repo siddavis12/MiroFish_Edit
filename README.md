@@ -1,203 +1,254 @@
 <div align="center">
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" width="75%"/>
+<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" width="60%"/>
 
-<a href="https://trendshift.io/repositories/16144" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16144" alt="666ghj%2FMiroFish | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+**다중 에이전트 기반 군중 지능 예측 엔진**
 
-简洁通用的群体智能引擎，预测万物
-</br>
-<em>A Simple and Universal Swarm Intelligence Engine, Predicting Anything</em>
+*현실 세계의 시드 정보로 디지털 시뮬레이션 세계를 구축하여 미래를 예측한다*
 
-<a href="https://www.shanda.com/" target="_blank"><img src="./static/image/shanda_logo.png" alt="666ghj%2MiroFish | Shanda" height="40"/></a>
-
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/MiroFish?style=flat-square&color=DAA520)](https://github.com/666ghj/MiroFish/stargazers)
-[![GitHub Watchers](https://img.shields.io/github/watchers/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/watchers)
-[![GitHub Forks](https://img.shields.io/github/forks/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/network)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/666ghj/MiroFish)
-
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/channels/1469200078932545606/1469201282077163739)
-[![X](https://img.shields.io/badge/X-Follow-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/mirofish_ai)
-[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?style=flat-square&logo=instagram&logoColor=white)](https://www.instagram.com/mirofish_ai/)
-
-[English](./README-EN.md) | [中文文档](./README.md)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)]()
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)]()
 
 </div>
 
-## ⚡ 项目概述
+---
 
-**MiroFish** 是一款基于多智能体技术的新一代 AI 预测引擎。通过提取现实世界的种子信息（如突发新闻、政策草案、金融信号），自动构建出高保真的平行数字世界。在此空间内，成千上万个具备独立人格、长期记忆与行为逻辑的智能体进行自由交互与社会演化。你可透过「上帝视角」动态注入变量，精准推演未来走向——**让未来在数字沙盘中预演，助决策在百战模拟后胜出**。
+## 프로젝트 소개
 
-> 你只需：上传种子材料（数据分析报告或者有趣的小说故事），并用自然语言描述预测需求</br>
-> MiroFish 将返回：一份详尽的预测报告，以及一个可深度交互的高保真数字世界
+**MiroFish**는 뉴스, 정책 문서, 금융 보고서, 소설 등 현실 세계의 시드 자료를 입력받아 **수백 개의 독립적 AI 에이전트가 자유롭게 상호작용하는 디지털 세계**를 구축하고, 그 과정에서 발현되는 집단 지능을 통해 미래를 예측하는 엔진이다.
 
-### 我们的愿景
+> **입력**: 시드 자료(PDF, 텍스트) + 자연어로 기술한 예측 요구사항
+> **출력**: 상세한 예측 보고서 + 심층 인터랙션이 가능한 시뮬레이션 세계
 
-MiroFish 致力于打造映射现实的群体智能镜像，通过捕捉个体互动引发的群体涌现，突破传统预测的局限：
+### 활용 사례
 
-- **于宏观**：我们是决策者的预演实验室，让政策与公关在零风险中试错
-- **于微观**：我们是个人用户的创意沙盘，无论是推演小说结局还是探索脑洞，皆可有趣、好玩、触手可及
+- **여론 시뮬레이션** — 정책 발표 전 다양한 이해관계자의 반응 예측
+- **시나리오 분석** — "만약 ~한다면?" 질문에 대한 군중 지능 기반 답변
+- **트렌드 예측** — 업계 변화, 기술 발전 경로에 대한 다중 관점 수렴 예측
+- **내러티브 추론** — 소설, 역사적 사건의 미완결 결말 예측
 
-从严肃预测到趣味仿真，我们让每一个如果都能看见结果，让预测万物成为可能。
+---
 
-## 🌐 在线体验
+## 작동 원리 — 5단계 파이프라인
 
-欢迎访问在线 Demo 演示环境，体验我们为你准备的一次关于热点舆情事件的推演预测：[mirofish-live-demo](https://666ghj.github.io/mirofish-demo/)
-
-## 📸 系统截图
-
-<div align="center">
-<table>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图1.png" alt="截图1" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图2.png" alt="截图2" width="100%"/></td>
-</tr>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图3.png" alt="截图3" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图4.png" alt="截图4" width="100%"/></td>
-</tr>
-<tr>
-<td><img src="./static/image/Screenshot/运行截图5.png" alt="截图5" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图6.png" alt="截图6" width="100%"/></td>
-</tr>
-</table>
-</div>
-
-## 🎬 演示视频
-
-### 1. 武汉大学舆情推演预测 + MiroFish项目讲解
-
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="./static/image/武大模拟演示封面.png" alt="MiroFish Demo Video" width="75%"/></a>
-
-点击图片查看使用微舆BettaFish生成的《武大舆情报告》进行预测的完整演示视频
-</div>
-
-### 2. 《红楼梦》失传结局推演预测
-
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1cPk3BBExq" target="_blank"><img src="./static/image/红楼梦模拟推演封面.jpg" alt="MiroFish Demo Video" width="75%"/></a>
-
-点击图片查看基于《红楼梦》前80回数十万字，MiroFish深度预测失传结局
-</div>
-
-> **金融方向推演预测**、**时政要闻推演预测**等示例陆续更新中...
-
-## 🔄 工作流程
-
-1. **图谱构建**：现实种子提取 & 个体与群体记忆注入 & GraphRAG构建
-2. **环境搭建**：实体关系抽取 & 人设生成 & 环境配置Agent注入仿真参数
-3. **开始模拟**：双平台并行模拟 & 自动解析预测需求 & 动态更新时序记忆
-4. **报告生成**：ReportAgent拥有丰富的工具集与模拟后环境进行深度交互
-5. **深度互动**：与模拟世界中的任意一位进行对话 & 与ReportAgent进行对话
-
-## 🚀 快速开始
-
-### 一、源码部署（推荐）
-
-#### 前置要求
-
-| 工具 | 版本要求 | 说明 | 安装检查 |
-|------|---------|------|---------|
-| **Node.js** | 18+ | 前端运行环境，包含 npm | `node -v` |
-| **Python** | ≥3.11, ≤3.12 | 后端运行环境 | `python --version` |
-| **uv** | 最新版 | Python 包管理器 | `uv --version` |
-
-#### 1. 配置环境变量
-
-```bash
-# 复制示例配置文件
-cp .env.example .env
-
-# 编辑 .env 文件，填入必要的 API 密钥
+```
+시드 문서 업로드
+       │
+       ▼
+┌─────────────────┐
+│ 1. 그래프 구축   │  온톨로지 자동 생성 → LLM 엔티티/관계 추출 → Neo4j + ChromaDB에 GraphRAG 구축
+└───────┬─────────┘
+        ▼
+┌─────────────────┐
+│ 2. 환경 구성     │  엔티티 필터링 → 시뮬레이션 설정 자동 생성 → OASIS 에이전트 프로필 생성
+└───────┬─────────┘
+        ▼
+┌─────────────────┐
+│ 3. 시뮬레이션    │  Twitter/Reddit 병렬 시뮬레이션 → 에이전트 토론·충돌·합의 → 실시간 모니터링
+└───────┬─────────┘
+        ▼
+┌─────────────────┐
+│ 4. 보고서 생성   │  ReportAgent가 ReACT 패턴으로 시뮬레이션 세계를 탐색하며 예측 보고서 작성
+└───────┬─────────┘
+        ▼
+┌─────────────────┐
+│ 5. 심층 인터랙션 │  시뮬레이션 세계의 에이전트와 직접 대화 + ReportAgent에 추가 질의
+└─────────────────┘
 ```
 
-**必需的环境变量：**
+---
+
+## 기술 스택
+
+| 영역 | 기술 |
+|------|------|
+| **프론트엔드** | Vue 3.5 + Vite 7 + D3.js 7 + Vue Router 4 + Axios |
+| **백엔드** | Python 3.11+ / Flask 3 + OpenAI SDK |
+| **그래프 DB** | Neo4j 5 (엔티티/관계 저장) |
+| **벡터 검색** | ChromaDB (시맨틱 검색, 인프로세스) |
+| **시뮬레이션** | CAMEL-OASIS 0.2.5 (소셜 미디어 시뮬레이션 엔진) |
+| **LLM** | OpenAI SDK 호환 API (기본: gpt-5-mini) |
+| **패키지 관리** | npm (프론트엔드), uv (백엔드) |
+
+---
+
+## 빠른 시작
+
+### 사전 요구사항
+
+| 도구 | 버전 | 확인 명령 |
+|------|------|-----------|
+| **Node.js** | 18+ | `node -v` |
+| **Python** | 3.11 ~ 3.12 | `python --version` |
+| **uv** | 최신 | `uv --version` |
+| **Neo4j** | 5.x | Docker 또는 로컬 설치 |
+
+### 1단계: Neo4j 실행
+
+```bash
+docker run -d --name neo4j \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/mirofish \
+  neo4j:5-community
+```
+
+### 2단계: 환경 변수 설정
+
+```bash
+cp .env.example .env
+```
+
+`.env` 파일을 열어 아래 필수 값을 입력:
 
 ```env
-# LLM API配置（支持 OpenAI SDK 格式的任意 LLM API）
-# 推荐使用阿里百炼平台qwen-plus模型：https://bailian.console.aliyun.com/
-# 注意消耗较大，可先进行小于40轮的模拟尝试
+# LLM API (OpenAI SDK 호환이면 모두 사용 가능)
 LLM_API_KEY=your_api_key
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL_NAME=qwen-plus
+LLM_MODEL_NAME=gpt-5-mini
 
-# Zep Cloud 配置
-# 每月免费额度即可支撑简单使用：https://app.getzep.com/
-ZEP_API_KEY=your_zep_api_key
+# Neo4j (기본값이 있으므로 로컬 Docker 사용 시 수정 불필요)
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=mirofish
 ```
 
-#### 2. 安装依赖
+### 3단계: 의존성 설치
 
 ```bash
-# 一键安装所有依赖（根目录 + 前端 + 后端）
+# 전체 설치 (루트 + 프론트엔드 + 백엔드)
 npm run setup:all
 ```
 
-或者分步安装：
+또는 분리 설치:
 
 ```bash
-# 安装 Node 依赖（根目录 + 前端）
-npm run setup
-
-# 安装 Python 依赖（后端，自动创建虚拟环境）
-npm run setup:backend
+npm run setup          # Node.js 의존성 (루트 + 프론트엔드)
+npm run setup:backend  # Python 의존성 (자동 가상환경 생성)
 ```
 
-#### 3. 启动服务
+### 4단계: 개발 서버 실행
 
 ```bash
-# 同时启动前后端（在项目根目录执行）
+# 프론트엔드 + 백엔드 동시 실행
 npm run dev
 ```
 
-**服务地址：**
-- 前端：`http://localhost:3000`
-- 后端 API：`http://localhost:5001`
+| 서비스 | URL |
+|--------|-----|
+| 프론트엔드 | http://localhost:3000 |
+| 백엔드 API | http://localhost:5001 |
+| Neo4j Browser | http://localhost:7474 |
 
-**单独启动：**
+개별 실행:
 
 ```bash
-npm run backend   # 仅启动后端
-npm run frontend  # 仅启动前端
+npm run frontend   # 프론트엔드만
+npm run backend    # 백엔드만
 ```
 
-### 二、Docker 部署
+### Docker 배포
 
 ```bash
-# 1. 配置环境变量（同源码部署）
 cp .env.example .env
-
-# 2. 拉取镜像并启动
+# .env 파일 편집 후:
 docker compose up -d
 ```
 
-默认会读取根目录下的 `.env`，并映射端口 `3000（前端）/5001（后端）`
+### Windows 원클릭 실행
 
-> 在 `docker-compose.yml` 中已通过注释提供加速镜像地址，可按需替换
+```powershell
+.\start.ps1
+```
 
-## 📬 更多交流
+---
 
-<div align="center">
-<img src="./static/image/QQ群.png" alt="QQ交流群" width="60%"/>
-</div>
+## 프로젝트 구조
 
-&nbsp;
+```
+MiroFish/
+├── frontend/src/
+│   ├── components/          # Vue 컴포넌트
+│   │   ├── Step1GraphBuild  #   그래프 구축 UI
+│   │   ├── Step2EnvSetup    #   환경 구성 UI
+│   │   ├── Step3Simulation  #   시뮬레이션 실행 UI
+│   │   ├── Step4Report      #   보고서 생성 UI
+│   │   ├── Step5Interaction #   심층 인터랙션 UI
+│   │   ├── GraphPanel       #   D3.js 그래프 시각화
+│   │   └── HistoryDatabase  #   프로젝트 히스토리
+│   ├── views/               # 페이지 라우트
+│   ├── api/                 # API 호출 모듈
+│   ├── store/               # 상태 관리
+│   └── router/              # Vue Router 설정
+│
+├── backend/app/
+│   ├── api/                 # Flask API 엔드포인트
+│   │   ├── graph.py         #   그래프 구축/조회 API
+│   │   ├── simulation.py    #   시뮬레이션 관리 API
+│   │   └── report.py        #   보고서 생성/조회 API
+│   ├── services/            # 비즈니스 로직
+│   │   ├── graph_store.py           # 그래프 저장소 추상 인터페이스
+│   │   ├── neo4j_store.py           # Neo4j 구현
+│   │   ├── chroma_store.py          # ChromaDB 벡터 검색
+│   │   ├── llm_extractor.py         # LLM 엔티티/관계 추출
+│   │   ├── ontology_generator.py    # 온톨로지 자동 생성
+│   │   ├── graph_builder.py         # 그래프 구축 오케스트레이터
+│   │   ├── entity_reader.py         # 엔티티 읽기/필터링
+│   │   ├── simulation_config_generator.py  # 시뮬레이션 설정 자동 생성
+│   │   ├── oasis_profile_generator.py      # OASIS 에이전트 프로필 생성
+│   │   ├── simulation_runner.py     # 시뮬레이션 실행/모니터링
+│   │   ├── simulation_manager.py    # 시뮬레이션 생명주기 관리
+│   │   ├── simulation_ipc.py        # 프로세스 간 통신
+│   │   ├── report_agent.py          # ReACT 기반 보고서 생성
+│   │   ├── graph_tools.py           # 검색/분석 도구 (InsightForge, Panorama, Interview)
+│   │   ├── graph_memory_updater.py  # 시뮬레이션 중 그래프 동적 업데이트
+│   │   └── text_processor.py        # 텍스트 전처리
+│   ├── models/              # Pydantic 데이터 모델
+│   ├── utils/               # 유틸리티 (LLM 클라이언트, 파일 파서, 로거, 재시도)
+│   └── config.py            # 환경 변수 설정
+│
+├── static/                  # 정적 리소스
+├── .env.example             # 환경 변수 템플릿
+├── docker-compose.yml       # Docker 배포 설정
+├── package.json             # 루트 스크립트 (dev, setup 등)
+└── start.ps1                # Windows 원클릭 실행 스크립트
+```
 
-MiroFish团队长期招募全职/实习，如果你对多Agent应用感兴趣，欢迎投递简历至：**mirofish@shanda.com**
+---
 
-## 📄 致谢
+## 환경 변수 참조
 
-**MiroFish 得到了盛大集团的战略支持和孵化！**
+| 변수 | 필수 | 기본값 | 설명 |
+|------|:----:|--------|------|
+| `LLM_API_KEY` | O | — | OpenAI SDK 호환 API 키 |
+| `LLM_MODEL_NAME` | O | `gpt-5-mini` | 사용할 LLM 모델명 |
+| `LLM_BASE_URL` | | — | 커스텀 API 엔드포인트 (OpenAI 이외) |
+| `NEO4J_URI` | | `bolt://localhost:7687` | Neo4j 접속 URI |
+| `NEO4J_USER` | | `neo4j` | Neo4j 사용자명 |
+| `NEO4J_PASSWORD` | | `mirofish` | Neo4j 비밀번호 |
+| `LLM_BOOST_API_KEY` | | — | 병렬 시뮬레이션용 두 번째 LLM API 키 |
+| `LLM_BOOST_MODEL_NAME` | | — | 병렬 시뮬레이션용 두 번째 모델명 |
+| `CHROMA_PERSIST_DIR` | | `./chroma_data` | ChromaDB 영속 저장 경로 |
 
-MiroFish 的仿真引擎由 **[OASIS](https://github.com/camel-ai/oasis)** 驱动，我们衷心感谢 CAMEL-AI 团队的开源贡献！
+---
 
-## 📈 项目统计
+## 주의사항
 
-<a href="https://www.star-history.com/#666ghj/MiroFish&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=666ghj/MiroFish&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=666ghj/MiroFish&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=666ghj/MiroFish&type=date&legend=top-left" />
- </picture>
-</a>
+- **토큰 소모**: 시뮬레이션은 다량의 LLM 호출을 수반한다. 테스트 시 **40라운드 이하**를 권장한다.
+- **그래프 구축**: LLM 추출을 사용하므로 시드 문서 크기에 비례하여 토큰 소모가 증가한다.
+- **ChromaDB**: 인프로세스로 실행되므로 별도 서버 설치가 불필요하다. 데이터는 `backend/chroma_data/`에 영속 저장된다.
+- **Boost LLM**: 병렬 시뮬레이션(Twitter + Reddit 동시)에서 두 번째 API를 사용하면 동시성이 향상된다. 미설정 시 기본 LLM으로 폴백한다.
+
+---
+
+## 감사의 말
+
+MiroFish의 시뮬레이션 엔진은 **[OASIS](https://github.com/camel-ai/oasis)** (CAMEL-AI)를 기반으로 한다.
+
+원본 프로젝트: **[MiroFish](https://github.com/666ghj/MiroFish)** by 666ghj
+
+---
+
+## 라이선스
+
+[AGPL-3.0](LICENSE)
