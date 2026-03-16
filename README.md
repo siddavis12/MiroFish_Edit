@@ -1,19 +1,3 @@
-<div align="center">
-
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" width="60%"/>
-
-**다중 에이전트 기반 군중 지능 예측 엔진**
-
-*현실 세계의 시드 정보로 디지털 시뮬레이션 세계를 구축하여 미래를 예측한다*
-
-[![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)]()
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)]()
-
-</div>
-
----
 
 ## 프로젝트 소개
 
