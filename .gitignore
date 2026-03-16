@@ -44,6 +44,7 @@ htmlcov/
 # Cursor
 .cursor/
 .claude/
+CLAUDE.local.md
 
 # 文档与测试程序
 mydoc/
@@ -58,3 +59,12 @@ backend/uploads/
 
 # Docker 数据
 data/
+
+# 이전 백엔드 (마이그레이션 참조용)
+old_backend/
+
+# ChromaDB 로컬 데이터
+backend/chroma_data/
+
+# UV 잠금 파일
+backend/uv.lock
