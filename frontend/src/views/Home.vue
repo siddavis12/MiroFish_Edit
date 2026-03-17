@@ -5,7 +5,7 @@
       <div class="nav-brand">MIROFISH</div>
       <div class="nav-links">
         <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
-          Github 홈페이지 방문 <span class="arrow">↗</span>
+          GitHub 바로가기 <span class="arrow">↗</span>
         </a>
       </div>
     </nav>
@@ -20,16 +20,16 @@
           </div>
 
           <h1 class=”main-title”>
-            임의의 보고서를 업로드하면<br>
-            <span class=”gradient-text”>즉시 미래를 시뮬레이션</span>
+            아무 문서나 올리면<br>
+            <span class=”gradient-text”>미래를 즉시 시뮬레이션</span>
           </h1>
 
           <div class=”hero-desc”>
             <p>
-              단 한 문단의 텍스트만으로도 <span class=”highlight-bold”>MiroFish</span>는 그 안의 현실 시드를 기반으로 최대 <span class=”highlight-orange”>백만 Agent</span>로 구성된 병렬 세계를 완전 자동으로 생성합니다. 신의 시점에서 변수를 주입하고, 복잡한 군중 상호작용 속에서 동적 환경의 <span class=”highlight-code”>”국소 최적해”</span>를 찾습니다
+              텍스트 한 문단이면 충분합니다. <span class=”highlight-bold”>MiroFish</span>는 현실 시드를 자동 추출해 최대 <span class=”highlight-orange”>백만 Agent</span>로 이루어진 병렬 세계를 구축합니다. 신의 시점에서 변수를 주입하고, 복잡한 군중 상호작용 속에서 <span class=”highlight-code”>”국소 최적해”</span>를 찾아냅니다
             </p>
             <p class=”slogan-text”>
-              미래를 Agent 군중 속에서 미리 시연하고, 결정을 백번의 전투 후에 승리하게 하다<span class=”blinking-cursor”>_</span>
+              Agent 군중으로 미래를 미리 시연하고, 백전백승의 결정을 이끌어내다<span class=”blinking-cursor”>_</span>
             </p>
           </div>
            
@@ -58,14 +58,14 @@
 
           <h2 class="section-title">준비 완료</h2>
           <p class="section-desc">
-            예측 엔진 대기 중, 여러 비정형 데이터를 업로드하여 시뮬레이션 시퀀스를 초기화할 수 있습니다
+            예측 엔진이 대기 중입니다. 비정형 데이터를 업로드하면 시뮬레이션을 바로 시작할 수 있습니다
           </p>
 
           <!-- 데이터 지표 카드 -->
           <div class="metrics-row">
             <div class="metric-card">
               <div class="metric-value">저비용</div>
-              <div class="metric-label">일반 시뮬레이션 평균 5$/회</div>
+              <div class="metric-label">일반 시뮬레이션 회당 평균 $5</div>
             </div>
             <div class="metric-card">
               <div class="metric-value">고가용성</div>
@@ -83,35 +83,35 @@
                 <span class="step-num">01</span>
                 <div class="step-info">
                   <div class="step-title">그래프 구축</div>
-                  <div class="step-desc">현실 시드 추출 & 개체/군중 기억 주입 & GraphRAG 구축</div>
+                  <div class="step-desc">현실 시드 추출 → 개체·군중 기억 주입 → GraphRAG 구축</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">02</span>
                 <div class="step-info">
                   <div class="step-title">환경 구성</div>
-                  <div class="step-desc">엔티티 관계 추출 & 페르소나 생성 & 환경 설정 Agent 시뮬레이션 파라미터 주입</div>
+                  <div class="step-desc">엔티티·관계 추출 → 페르소나 생성 → Agent 시뮬레이션 파라미터 설정</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">03</span>
                 <div class="step-info">
                   <div class="step-title">시뮬레이션 시작</div>
-                  <div class="step-desc">듀얼 플랫폼 병렬 시뮬레이션 & 예측 요구사항 자동 분석 & 시계열 기억 동적 업데이트</div>
+                  <div class="step-desc">듀얼 플랫폼 병렬 시뮬레이션 → 예측 요구사항 자동 분석 → 시계열 기억 실시간 갱신</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">04</span>
                 <div class="step-info">
                   <div class="step-title">보고서 생성</div>
-                  <div class="step-desc">ReportAgent가 풍부한 도구 세트로 시뮬레이션 후 환경과 심층 상호작용</div>
+                  <div class="step-desc">ReportAgent가 다양한 분석 도구로 시뮬레이션 세계를 심층 탐색</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">05</span>
                 <div class="step-info">
                   <div class="step-title">심층 인터랙션</div>
-                  <div class="step-desc">시뮬레이션 세계의 임의 개체와 대화 & ReportAgent와 대화</div>
+                  <div class="step-desc">시뮬레이션 세계의 에이전트와 자유롭게 대화 → ReportAgent에 추가 질의</div>
                 </div>
               </div>
             </div>
@@ -176,7 +176,7 @@
                 <textarea
                   v-model="formData.simulationRequirement"
                   class="code-input"
-                  placeholder="// 자연어로 시뮬레이션 또는 예측 요구사항을 입력하세요 (예: 특정 기관이 징계 취소 공고를 발표하면 어떤 여론 추세가 발생할까요)"
+                  placeholder="// 시뮬레이션하고 싶은 상황을 자유롭게 입력하세요 (예: 특정 기관이 징계 취소를 공고하면 여론이 어떻게 흘러갈까?)"
                   rows="6"
                   :disabled="loading"
                 ></textarea>

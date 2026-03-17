@@ -181,7 +181,7 @@
             </div>
             <!-- 재생 불가 안내 -->
             <div class="modal-playback-hint">
-              <span class="hint-text">Step3 「시뮬레이션 시작」과 Step5 「심층 인터랙션」은 실행 중에만 시작 가능하며, 히스토리 재생은 지원되지 않습니다</span>
+              <span class="hint-text">Step3 「시뮬레이션 시작」과 Step5 「심층 인터랙션」은 실행 중에만 접근할 수 있으며, 지난 기록 재생은 지원하지 않습니다</span>
             </div>
           </div>
         </div>
