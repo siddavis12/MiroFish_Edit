@@ -81,7 +81,9 @@ Write-Host ">> 의존성 설치 중..." -ForegroundColor Cyan
 if (-not (Test-Path (Join-Path $ProjectRoot "node_modules"))) {
   Write-Host "  루트 npm install..." -ForegroundColor Gray
   Push-Location $ProjectRoot
-  npm install --legacy-peer-deps 2>&1 | Out-Null
+  $ErrorActionPreference = "Continue"
+  $null = & npm install --legacy-peer-deps 2>&1
+  $ErrorActionPreference = "Stop"
   Pop-Location
 }
 
@@ -90,14 +92,25 @@ $frontendDir = Join-Path $ProjectRoot "frontend"
 if (-not (Test-Path (Join-Path $frontendDir "node_modules"))) {
   Write-Host "  프론트엔드 npm install..." -ForegroundColor Gray
   Push-Location $frontendDir
-  npm install --legacy-peer-deps 2>&1 | Out-Null
+  $ErrorActionPreference = "Continue"
+  $null = & npm install --legacy-peer-deps 2>&1
+  $ErrorActionPreference = "Stop"
   Pop-Location
 }
 
 # 백엔드 Python 의존성
 Write-Host "  백엔드 uv sync..." -ForegroundColor Gray
 Push-Location (Join-Path $ProjectRoot "backend")
-uv sync 2>&1 | Out-Null
+$ErrorActionPreference = "Continue"
+$uvOutput = & uv sync 2>&1
+$uvExit = $LASTEXITCODE
+$ErrorActionPreference = "Stop"
+if ($uvExit -ne 0) {
+  Write-Host "[오류] uv sync 실패:" -ForegroundColor Red
+  $uvOutput | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+  Pop-Location
+  exit 1
+}
 Pop-Location
 
 Write-Host "[OK] 의존성 설치 완료" -ForegroundColor Green
