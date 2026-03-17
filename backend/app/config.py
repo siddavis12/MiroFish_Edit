@@ -36,7 +36,11 @@ class Config:
     LLM_BOOST_MODEL_NAME = os.environ.get('LLM_BOOST_MODEL_NAME', '')
 
     # Neo4j 설정
-    NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
+    NEO4J_HOST = os.environ.get('NEO4J_HOST', 'localhost')
+    NEO4J_BOLT_PORT = int(os.environ.get('NEO4J_BOLT_PORT', '7687'))
+    NEO4J_HTTP_PORT = int(os.environ.get('NEO4J_HTTP_PORT', '7474'))
+    # NEO4J_URI: 직접 지정하거나, HOST+BOLT_PORT로 자동 생성
+    NEO4J_URI = os.environ.get('NEO4J_URI', f'bolt://{NEO4J_HOST}:{NEO4J_BOLT_PORT}')
     NEO4J_USER = os.environ.get('NEO4J_USER', 'neo4j')
     NEO4J_PASSWORD = os.environ.get('NEO4J_PASSWORD', 'mirofish')
 

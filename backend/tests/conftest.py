@@ -19,7 +19,9 @@ if backend_root not in sys.path:
 # ============== 환경변수 설정 (import 전에 설정) ==============
 os.environ.setdefault("LLM_API_KEY", "test-api-key-for-testing")
 os.environ.setdefault("LLM_MODEL_NAME", "gpt-4o-mini")
-os.environ.setdefault("NEO4J_URI", "bolt://localhost:7687")
+os.environ.setdefault("NEO4J_HOST", "localhost")
+os.environ.setdefault("NEO4J_BOLT_PORT", "7687")
+os.environ.setdefault("NEO4J_HTTP_PORT", "7474")
 os.environ.setdefault("NEO4J_USER", "neo4j")
 os.environ.setdefault("NEO4J_PASSWORD", "test")
 
