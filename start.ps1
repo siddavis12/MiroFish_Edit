@@ -40,6 +40,22 @@ if ($missing.Count -gt 0) {
   exit 1
 }
 
+# Neo4j 실행 여부 확인
+$neo4jBat = Join-Path $ProjectRoot "neo4j\bin\neo4j.bat"
+if (Test-Path $neo4jBat) {
+  try {
+    $conn = New-Object System.Net.Sockets.TcpClient
+    $conn.Connect("localhost", 7687)
+    $conn.Close()
+    Write-Host "[OK] Neo4j (bolt://localhost:7687)" -ForegroundColor Green
+  } catch {
+    Write-Host "[경고] Neo4j가 설치되어 있지만 실행 중이 아닙니다" -ForegroundColor Yellow
+    Write-Host "       별도 터미널에서 실행: .\start-neo4j.ps1" -ForegroundColor Yellow
+  }
+} else {
+  Write-Host "[경고] Neo4j 미설치 — 설정: .\setup-neo4j.ps1" -ForegroundColor Yellow
+}
+
 # .env 파일 확인
 $envFile = Join-Path $ProjectRoot ".env"
 $envExample = Join-Path $ProjectRoot ".env.example"

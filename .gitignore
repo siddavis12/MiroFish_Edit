@@ -68,3 +68,5 @@ backend/chroma_data/
 
 # UV ì ê¸ˆ íŒŒì¼
 backend/uv.lock
+# Neo4j Community Edition (·ÎÄÃ ¼³Ä¡)
+neo4j/

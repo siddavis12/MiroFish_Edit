@@ -1583,7 +1583,8 @@ def start_simulation():
             platform=platform,
             max_rounds=max_rounds,
             enable_graph_memory_update=enable_graph_memory_update,
-            graph_id=graph_id
+            graph_id=graph_id,
+            force=force
         )
 
         # 시뮬레이션 상태 업데이트

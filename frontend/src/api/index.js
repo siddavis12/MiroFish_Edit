@@ -24,13 +24,17 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    
+
     // 반환된 상태 코드가 success가 아니면 오류 발생
     if (!res.success && res.success !== undefined) {
       console.error('API Error:', res.error || res.message || 'Unknown error')
-      return Promise.reject(new Error(res.error || res.message || 'Error'))
+      // 원본 응답을 에러에 첨부하여 상태 코드 확인 가능하게
+      const err = new Error(res.error || res.message || 'Error')
+      err.response = response
+      err.apiError = res
+      return Promise.reject(err)
     }
-    
+
     return res
   },
   error => {
@@ -51,13 +55,20 @@ service.interceptors.response.use(
 )
 
 // 재시도 기능이 포함된 요청 함수
+// 4xx 클라이언트 에러는 재시도하지 않음 (서버 에러/네트워크 에러만 재시도)
 export const requestWithRetry = async (requestFn, maxRetries = 3, delay = 1000) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await requestFn()
     } catch (error) {
+      // 4xx 응답은 재시도 불필요 (클라이언트 측 문제)
+      const status = error?.response?.status
+      if (status && status >= 400 && status < 500) {
+        throw error
+      }
+
       if (i === maxRetries - 1) throw error
-      
+
       console.warn(`Request failed, retrying (${i + 1}/${maxRetries})...`)
       await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)))
     }

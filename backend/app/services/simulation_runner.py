@@ -315,25 +315,50 @@ class SimulationRunner:
         platform: str = "parallel",  # twitter / reddit / parallel
         max_rounds: int = None,  # 최대 시뮬레이션 라운드 수 (선택, 너무 긴 시뮬레이션 절단용)
         enable_graph_memory_update: bool = False,  # 활동을 Zep 그래프에 업데이트할지 여부
-        graph_id: str = None  # Zep 그래프 ID (그래프 업데이트 활성화 시 필수)
+        graph_id: str = None,  # Zep 그래프 ID (그래프 업데이트 활성화 시 필수)
+        force: bool = False  # 강제 재시작 (기존 프로세스 종료 및 로그 정리)
     ) -> SimulationRunState:
         """
         시뮬레이션 시작
-        
+
         Args:
             simulation_id: 시뮬레이션 ID
             platform: 실행 플랫폼 (twitter/reddit/parallel)
             max_rounds: 최대 시뮬레이션 라운드 수 (선택, 너무 긴 시뮬레이션 절단용)
             enable_graph_memory_update: Agent 활동을 Zep 그래프에 동적 업데이트할지 여부
             graph_id: Zep 그래프 ID (그래프 업데이트 활성화 시 필수)
-            
+            force: 강제 재시작 여부 (기존 프로세스 종료 및 실행 로그 정리)
+
         Returns:
             SimulationRunState
         """
         # 이미 실행 중인지 확인
         existing = cls.get_run_state(simulation_id)
         if existing and existing.runner_status in [RunnerStatus.RUNNING, RunnerStatus.STARTING]:
-            raise ValueError(f"시뮬레이션이 이미 실행 중입니다: {simulation_id}")
+            if force:
+                # 강제 모드: 기존 프로세스 종료 및 로그 정리
+                logger.info(f"강제 재시작: 기존 시뮬레이션 정리 중 {simulation_id}")
+                process = cls._processes.get(simulation_id)
+                if process and process.poll() is None:
+                    try:
+                        cls._terminate_process(process, simulation_id)
+                    except Exception as e:
+                        logger.warning(f"기존 프로세스 종료 시 경고: {e}")
+                        try:
+                            process.kill()
+                        except Exception:
+                            pass
+                # 그래프 메모리 업데이터 정리
+                if cls._graph_memory_enabled.get(simulation_id, False):
+                    try:
+                        GraphMemoryManager.stop_updater(simulation_id)
+                    except Exception as e:
+                        logger.warning(f"그래프 메모리 업데이터 정리 시 경고: {e}")
+                    cls._graph_memory_enabled.pop(simulation_id, None)
+                # 실행 로그 정리
+                cls.cleanup_simulation_logs(simulation_id)
+            else:
+                raise ValueError(f"시뮬레이션이 이미 실행 중입니다: {simulation_id}")
         
         # 시뮬레이션 설정 로드
         sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
