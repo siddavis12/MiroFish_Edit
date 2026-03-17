@@ -43,7 +43,8 @@ htmlcov/
 
 # Cursor
 .cursor/
-.claude/
+.claude/*
+!.claude/skills/
 CLAUDE.local.md
 
 # 文档与测试程序
