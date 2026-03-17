@@ -40,17 +40,53 @@ if ($missing.Count -gt 0) {
   exit 1
 }
 
-# Neo4j 실행 여부 확인
+# Neo4j 실행 여부 확인 및 자동 시작
 $neo4jBat = Join-Path $ProjectRoot "neo4j\bin\neo4j.bat"
 if (Test-Path $neo4jBat) {
+  $neo4jRunning = $false
   try {
     $conn = New-Object System.Net.Sockets.TcpClient
     $conn.Connect("localhost", 7687)
     $conn.Close()
+    $neo4jRunning = $true
+  } catch {}
+
+  if ($neo4jRunning) {
     Write-Host "[OK] Neo4j (bolt://localhost:7687)" -ForegroundColor Green
-  } catch {
-    Write-Host "[경고] Neo4j가 설치되어 있지만 실행 중이 아닙니다" -ForegroundColor Yellow
-    Write-Host "       별도 터미널에서 실행: .\start-neo4j.ps1" -ForegroundColor Yellow
+  } else {
+    Write-Host ">> Neo4j 시작 중..." -ForegroundColor Cyan
+
+    # JAVA_HOME 확인
+    if (-not $env:JAVA_HOME) {
+      $machineJavaHome = [System.Environment]::GetEnvironmentVariable("JAVA_HOME", "Machine")
+      if ($machineJavaHome) { $env:JAVA_HOME = $machineJavaHome }
+    }
+
+    # 백그라운드 프로세스로 Neo4j console 모드 시작
+    $env:NEO4J_HOME = Join-Path $ProjectRoot "neo4j"
+    Start-Process powershell -ArgumentList "-WindowStyle Hidden -Command `"& '$neo4jBat' console`"" -WindowStyle Hidden
+
+    # 연결 대기 (최대 30초)
+    $waited = 0
+    $maxWait = 30
+    while ($waited -lt $maxWait) {
+      Start-Sleep -Seconds 2
+      $waited += 2
+      try {
+        $conn = New-Object System.Net.Sockets.TcpClient
+        $conn.Connect("localhost", 7687)
+        $conn.Close()
+        $neo4jRunning = $true
+        break
+      } catch {}
+      Write-Host "  Neo4j 대기 중... ($waited/$maxWait 초)" -ForegroundColor Gray
+    }
+
+    if ($neo4jRunning) {
+      Write-Host "[OK] Neo4j 시작 완료 (bolt://localhost:7687)" -ForegroundColor Green
+    } else {
+      Write-Host "[경고] Neo4j 시작 시간 초과 — 수동 확인 필요: .\start-neo4j.ps1" -ForegroundColor Yellow
+    }
   }
 } else {
   Write-Host "[경고] Neo4j 미설치 — 설정: .\setup-neo4j.ps1" -ForegroundColor Yellow
