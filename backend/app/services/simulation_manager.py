@@ -455,6 +455,31 @@ class SimulationManager:
             self._save_simulation_state(state)
             raise
     
+    def delete_simulation(self, simulation_id: str) -> bool:
+        """
+        시뮬레이션 삭제 (데이터 디렉토리 및 캐시 제거)
+
+        실행 중인 시뮬레이션은 삭제 불가
+        """
+        state = self._load_simulation_state(simulation_id)
+        if not state:
+            return False
+
+        # 실행 중인 시뮬레이션은 삭제 불가
+        if state.status == SimulationStatus.RUNNING:
+            raise ValueError("실행 중인 시뮬레이션은 삭제할 수 없습니다. 먼저 중지해주세요.")
+
+        # 파일 시스템에서 삭제
+        sim_dir = os.path.join(self.SIMULATION_DATA_DIR, simulation_id)
+        if os.path.exists(sim_dir):
+            shutil.rmtree(sim_dir)
+
+        # 메모리 캐시에서 제거
+        self._simulations.pop(simulation_id, None)
+
+        logger.info(f"시뮬레이션 삭제 완료: {simulation_id}")
+        return True
+
     def get_simulation(self, simulation_id: str) -> Optional[SimulationState]:
         """시뮬레이션 상태 가져오기"""
         return self._load_simulation_state(simulation_id)

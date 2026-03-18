@@ -45,21 +45,21 @@ JSON 형식으로 출력하세요. 다음 구조를 포함해야 합니다:
     "entity_types": [
         {
             "name": "엔티티 유형명 (영어, PascalCase)",
-            "description": "간략 설명 (영어, 100자 이내)",
+            "description": "간략 설명 (한국어, 100자 이내)",
             "attributes": [
                 {
                     "name": "속성명 (영어, snake_case)",
                     "type": "text",
-                    "description": "속성 설명"
+                    "description": "속성 설명 (한국어)"
                 }
             ],
-            "examples": ["예시 엔티티1", "예시 엔티티2"]
+            "examples": ["예시 엔티티1 (한국어)", "예시 엔티티2 (한국어)"]
         }
     ],
     "edge_types": [
         {
             "name": "관계 유형명 (영어, UPPER_SNAKE_CASE)",
-            "description": "간략 설명 (영어, 100자 이내)",
+            "description": "간략 설명 (한국어, 100자 이내)",
             "source_targets": [
                 {"source": "소스 엔티티 유형", "target": "대상 엔티티 유형"}
             ],
@@ -291,22 +291,22 @@ class OntologyGenerator:
         # 폴백 유형 정의
         person_fallback = {
             "name": "Person",
-            "description": "Any individual person not fitting other specific person types.",
+            "description": "다른 구체적 인물 유형에 속하지 않는 모든 자연인 개인.",
             "attributes": [
-                {"name": "full_name", "type": "text", "description": "Full name of the person"},
-                {"name": "role", "type": "text", "description": "Role or occupation"}
+                {"name": "full_name", "type": "text", "description": "인물의 전체 이름"},
+                {"name": "role", "type": "text", "description": "역할 또는 직업"}
             ],
-            "examples": ["ordinary citizen", "anonymous netizen"]
+            "examples": ["일반 시민", "익명 네티즌"]
         }
-        
+
         organization_fallback = {
             "name": "Organization",
-            "description": "Any organization not fitting other specific organization types.",
+            "description": "다른 구체적 조직 유형에 속하지 않는 모든 조직 기관.",
             "attributes": [
-                {"name": "org_name", "type": "text", "description": "Name of the organization"},
-                {"name": "org_type", "type": "text", "description": "Type of organization"}
+                {"name": "org_name", "type": "text", "description": "조직의 이름"},
+                {"name": "org_type", "type": "text", "description": "조직의 유형"}
             ],
-            "examples": ["small business", "community group"]
+            "examples": ["소규모 사업체", "커뮤니티 단체"]
         }
         
         # 이미 폴백 유형이 있는지 확인

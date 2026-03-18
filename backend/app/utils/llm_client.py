@@ -98,7 +98,13 @@ class LLMClient:
         response = self.client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content or ""
         # 일부 모델은 content에 <think> 사고 내용을 포함하므로 제거
-        content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        # 단, <think> 밖에 실제 콘텐츠가 있을 때만 제거 (전부 <think> 안에 있으면 보존)
+        stripped = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        if stripped:
+            content = stripped
+        else:
+            # <think> 태그 안에만 콘텐츠가 있는 경우 → 태그만 제거하고 내용 보존
+            content = re.sub(r'</?think>', '', content).strip()
         return content
 
     def chat_json(

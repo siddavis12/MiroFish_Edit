@@ -745,63 +745,63 @@ class OasisProfileGenerator:
         
         if entity_type_lower in ["student", "alumni"]:
             return {
-                "bio": f"{entity_type} with interests in academics and social issues.",
-                "persona": f"{entity_name} is a {entity_type.lower()} who is actively engaged in academic and social discussions. They enjoy sharing perspectives and connecting with peers.",
+                "bio": f"학업과 사회 문제에 관심이 있는 {entity_name}.",
+                "persona": f"{entity_name}은(는) 학업 및 사회적 토론에 적극적으로 참여하는 학생입니다. 동료들과 소통하고 다양한 관점을 공유하는 것을 즐깁니다.",
                 "age": random.randint(18, 30),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(self.MBTI_TYPES),
                 "country": random.choice(self.COUNTRIES),
-                "profession": "Student",
-                "interested_topics": ["Education", "Social Issues", "Technology"],
+                "profession": "학생",
+                "interested_topics": ["교육", "사회 이슈", "기술"],
             }
-        
+
         elif entity_type_lower in ["publicfigure", "expert", "faculty"]:
             return {
-                "bio": f"Expert and thought leader in their field.",
-                "persona": f"{entity_name} is a recognized {entity_type.lower()} who shares insights and opinions on important matters. They are known for their expertise and influence in public discourse.",
+                "bio": f"해당 분야의 전문가이자 오피니언 리더인 {entity_name}.",
+                "persona": f"{entity_name}은(는) 중요한 사안에 대해 전문적인 견해와 통찰을 공유하는 인물입니다. 공론장에서의 전문성과 영향력으로 알려져 있습니다.",
                 "age": random.randint(35, 60),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(["ENTJ", "INTJ", "ENTP", "INTP"]),
                 "country": random.choice(self.COUNTRIES),
-                "profession": entity_attributes.get("occupation", "Expert"),
-                "interested_topics": ["Politics", "Economics", "Culture & Society"],
+                "profession": entity_attributes.get("occupation", "전문가"),
+                "interested_topics": ["정치", "경제", "문화와 사회"],
             }
-        
+
         elif entity_type_lower in ["mediaoutlet", "socialmediaplatform"]:
             return {
-                "bio": f"Official account for {entity_name}. News and updates.",
-                "persona": f"{entity_name} is a media entity that reports news and facilitates public discourse. The account shares timely updates and engages with the audience on current events.",
+                "bio": f"{entity_name}의 공식 계정. 뉴스 및 최신 소식 제공.",
+                "persona": f"{entity_name}은(는) 뉴스를 보도하고 공론을 촉진하는 미디어입니다. 시의적절한 소식을 전달하고 현안에 대해 독자와 소통합니다.",
                 "age": 30,  # 기관 가상 나이
                 "gender": "other",  # 기관은 other 사용
                 "mbti": "ISTJ",  # 기관 스타일: 엄격하고 보수적
-                "country": "China",
-                "profession": "Media",
-                "interested_topics": ["General News", "Current Events", "Public Affairs"],
+                "country": "한국",
+                "profession": "미디어",
+                "interested_topics": ["종합 뉴스", "시사", "공공 문제"],
             }
-        
+
         elif entity_type_lower in ["university", "governmentagency", "ngo", "organization"]:
             return {
-                "bio": f"Official account of {entity_name}.",
-                "persona": f"{entity_name} is an institutional entity that communicates official positions, announcements, and engages with stakeholders on relevant matters.",
+                "bio": f"{entity_name}의 공식 계정.",
+                "persona": f"{entity_name}은(는) 공식 입장과 공지사항을 전달하고 이해관계자와 소통하는 기관입니다.",
                 "age": 30,  # 기관 가상 나이
                 "gender": "other",  # 기관은 other 사용
                 "mbti": "ISTJ",  # 기관 스타일: 엄격하고 보수적
-                "country": "China",
+                "country": "한국",
                 "profession": entity_type,
-                "interested_topics": ["Public Policy", "Community", "Official Announcements"],
+                "interested_topics": ["공공 정책", "커뮤니티", "공식 발표"],
             }
-        
+
         else:
             # 기본 페르소나
             return {
                 "bio": entity_summary[:150] if entity_summary else f"{entity_type}: {entity_name}",
-                "persona": entity_summary or f"{entity_name} is a {entity_type.lower()} participating in social discussions.",
+                "persona": entity_summary or f"{entity_name}은(는) 사회적 토론에 참여하는 참가자입니다.",
                 "age": random.randint(25, 50),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(self.MBTI_TYPES),
                 "country": random.choice(self.COUNTRIES),
                 "profession": entity_type,
-                "interested_topics": ["General", "Social Issues"],
+                "interested_topics": ["일반", "사회 이슈"],
             }
     
     def set_graph_id(self, graph_id: str):
@@ -900,7 +900,7 @@ class OasisProfileGenerator:
                     user_name=self._generate_username(entity.name),
                     name=entity.name,
                     bio=f"{entity_type}: {entity.name}",
-                    persona=entity.summary or f"A participant in social discussions.",
+                    persona=entity.summary or "사회적 토론에 참여하는 참가자.",
                     source_entity_uuid=entity.uuid,
                     source_entity_type=entity_type,
                 )
@@ -956,7 +956,7 @@ class OasisProfileGenerator:
                         user_name=self._generate_username(entity.name),
                         name=entity.name,
                         bio=f"{entity_type}: {entity.name}",
-                        persona=entity.summary or "A participant in social discussions.",
+                        persona=entity.summary or "사회적 토론에 참여하는 참가자.",
                         source_entity_uuid=entity.uuid,
                         source_entity_type=entity_type,
                     )

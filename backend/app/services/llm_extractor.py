@@ -148,13 +148,15 @@ class LLMEntityExtractor:
 1. 활동에 참여한 엔티티 (인물, 조직, 주제 등)
 2. 엔티티 간의 관계 (상호작용, 토론, 팔로우 등)
 
+언어 규칙: name/summary/fact는 한국어, type은 영어 PascalCase, 관계 name은 영어 UPPER_SNAKE_CASE
+
 엄격하게 JSON 형식으로 반환:
 {{
   "entities": [
-    {{"name": "엔티티명", "type": "엔티티 유형", "summary": "간략 설명"}}
+    {{"name": "엔티티명 (한국어)", "type": "엔티티 유형 (영어)", "summary": "간략 설명 (한국어)"}}
   ],
   "relationships": [
-    {{"source": "출발 엔티티명", "target": "대상 엔티티명", "name": "관계 유형", "fact": "관계 사실 설명"}}
+    {{"source": "출발 엔티티명 (한국어)", "target": "대상 엔티티명 (한국어)", "name": "관계 유형 (영어)", "fact": "관계 사실 설명 (한국어)"}}
   ]
 }}"""
 
@@ -236,22 +238,29 @@ class LLMEntityExtractor:
 3. 사전 정의된 엔티티 유형이 있으면 우선 사용
 4. 알려진 엔티티가 있으면 동일한 이름을 사용하여 중복 방지
 
+### 언어 규칙 (매우 중요!):
+- "name" (엔티티 이름): 반드시 한국어 (예: "김철수", "서울대학교")
+- "summary": 반드시 한국어
+- "type": 영어 PascalCase (예: "Person", "University")
+- 관계 "name": 영어 UPPER_SNAKE_CASE (예: "WORKS_FOR")
+- "fact": 반드시 한국어
+
 다음 JSON 형식을 엄격하게 반환 (다른 내용을 포함하지 마세요):
 {{
   "entities": [
     {{
-      "name": "엔티티 이름",
-      "type": "엔티티 유형",
-      "summary": "엔티티 소개",
+      "name": "엔티티 이름 (한국어)",
+      "type": "엔티티 유형 (영어 PascalCase)",
+      "summary": "엔티티 소개 (한국어)",
       "attributes": {{}}
     }}
   ],
   "relationships": [
     {{
-      "source": "출발 엔티티 이름",
-      "target": "대상 엔티티 이름",
-      "name": "관계 유형",
-      "fact": "관계의 사실 설명"
+      "source": "출발 엔티티 이름 (한국어)",
+      "target": "대상 엔티티 이름 (한국어)",
+      "name": "관계 유형 (영어 UPPER_SNAKE_CASE)",
+      "fact": "관계의 사실 설명 (한국어)"
     }}
   ]
 }}"""

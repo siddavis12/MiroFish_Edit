@@ -183,6 +183,25 @@
             <div class="modal-playback-hint">
               <span class="hint-text">Step3 「시뮬레이션 시작」과 Step5 「심층 인터랙션」은 실행 중에만 접근할 수 있으며, 지난 기록 재생은 지원하지 않습니다</span>
             </div>
+
+            <!-- 삭제 영역 -->
+            <div class="modal-delete-section">
+              <div class="delete-divider"></div>
+              <div v-if="!confirmingDelete" class="delete-trigger">
+                <button class="delete-trigger-btn" @click="toggleDeleteConfirm">
+                  시뮬레이션 삭제
+                </button>
+              </div>
+              <div v-else class="delete-confirm">
+                <span class="delete-warning">이 시뮬레이션의 모든 데이터가 영구 삭제됩니다</span>
+                <div class="delete-actions">
+                  <button class="delete-cancel-btn" @click="toggleDeleteConfirm" :disabled="deleting">취소</button>
+                  <button class="delete-confirm-btn" @click="handleDelete" :disabled="deleting">
+                    {{ deleting ? '삭제 중...' : '삭제 확인' }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Transition>
@@ -193,7 +212,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getSimulationHistory } from '../api/simulation'
+import { getSimulationHistory, deleteSimulation } from '../api/simulation'
 
 const router = useRouter()
 const route = useRoute()
@@ -205,6 +224,8 @@ const isExpanded = ref(false)
 const hoveringCard = ref(null)
 const historyContainer = ref(null)
 const selectedProject = ref(null)  // 현재 선택된 프로젝트 (팝업용)
+const deleting = ref(false)  // 삭제 진행 중 상태
+const confirmingDelete = ref(false)  // 삭제 확인 상태
 let observer = null
 let isAnimating = false  // 애니메이션 잠금, 깜빡임 방지
 let expandDebounceTimer = null  // 디바운스 타이머
@@ -399,6 +420,35 @@ const navigateToProject = (simulation) => {
 // 팝업 닫기
 const closeModal = () => {
   selectedProject.value = null
+  confirmingDelete.value = false
+}
+
+// 삭제 확인 토글
+const toggleDeleteConfirm = () => {
+  confirmingDelete.value = !confirmingDelete.value
+}
+
+// 시뮬레이션 삭제
+const handleDelete = async () => {
+  if (!selectedProject.value || deleting.value) return
+
+  const simulationId = selectedProject.value.simulation_id
+  deleting.value = true
+
+  try {
+    const response = await deleteSimulation(simulationId)
+    if (response.success) {
+      // 목록에서 제거
+      projects.value = projects.value.filter(p => p.simulation_id !== simulationId)
+      closeModal()
+    }
+  } catch (error) {
+    console.error('시뮬레이션 삭제 실패:', error)
+    alert(error.response?.data?.error || '시뮬레이션 삭제에 실패했습니다.')
+  } finally {
+    deleting.value = false
+    confirmingDelete.value = false
+  }
 }
 
 // 그래프 구축 페이지로 이동 (Project)
@@ -1336,5 +1386,96 @@ onUnmounted(() => {
   letter-spacing: 0.3px;
   text-align: center;
   line-height: 1.5;
+}
+
+/* 삭제 영역 */
+.modal-delete-section {
+  padding: 0 32px 20px;
+}
+
+.delete-divider {
+  height: 1px;
+  background: #F3F4F6;
+  margin-bottom: 16px;
+}
+
+.delete-trigger {
+  display: flex;
+  justify-content: center;
+}
+
+.delete-trigger-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #9CA3AF;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+.delete-trigger-btn:hover {
+  color: #EF4444;
+}
+
+.delete-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.delete-warning {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: #EF4444;
+  letter-spacing: 0.3px;
+}
+
+.delete-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.delete-cancel-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 6px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-cancel-btn:hover:not(:disabled) {
+  border-color: #D1D5DB;
+  background: #F9FAFB;
+}
+
+.delete-confirm-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 6px 16px;
+  border: 1px solid #EF4444;
+  border-radius: 4px;
+  background: #EF4444;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-confirm-btn:hover:not(:disabled) {
+  background: #DC2626;
+  border-color: #DC2626;
+}
+
+.delete-confirm-btn:disabled,
+.delete-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

@@ -68,6 +68,14 @@ export const getSimulationConfigRealtime = (simulationId) => {
 }
 
 /**
+ * 시뮬레이션 삭제
+ * @param {string} simulationId
+ */
+export const deleteSimulation = (simulationId) => {
+  return service.delete(`/api/simulation/${simulationId}`)
+}
+
+/**
  * 모든 시뮬레이션 목록
  * @param {string} projectId - 선택 사항, 프로젝트 ID로 필터링
  */
