@@ -32,7 +32,7 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("LLM_API_KEY가 설정되지 않았습니다")
 
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(api_key=self.api_key, timeout=120.0)
 
         # 모델 특성 캐싱
         self._reasoning = self._is_reasoning_model()
@@ -86,7 +86,9 @@ class LLMClient:
 
         if self._reasoning:
             # reasoning 모델: temperature 제거, max_completion_tokens 사용
-            kwargs["max_completion_tokens"] = max_tokens
+            # 추론(thinking) 토큰도 이 예산에 포함되므로 최소 3배 여유분 확보
+            reasoning_budget = max(max_tokens * 3, 16384)
+            kwargs["max_completion_tokens"] = reasoning_budget
         else:
             # 일반 모델: 기존 방식
             kwargs["temperature"] = temperature
@@ -112,7 +114,7 @@ class LLMClient:
         messages: List[Dict[str, str]],
         temperature: float = 0.3,
         max_tokens: int = 4096,
-        max_attempts: int = 2
+        max_attempts: int = 3
     ) -> Dict[str, Any]:
         """
         채팅 요청을 전송하고 JSON을 반환합니다
@@ -129,12 +131,19 @@ class LLMClient:
         last_error = None
 
         for attempt in range(max_attempts):
-            response = self.chat(
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                response_format={"type": "json_object"}
-            )
+            try:
+                response = self.chat(
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    response_format={"type": "json_object"}
+                )
+            except Exception as e:
+                last_error = e
+                wait = 2 * (attempt + 1)
+                time.sleep(wait)
+                continue
+
             # markdown 코드 블록 마커 제거
             cleaned_response = response.strip()
             cleaned_response = re.sub(r'^```(?:json)?\s*\n?', '', cleaned_response, flags=re.IGNORECASE)
@@ -144,14 +153,16 @@ class LLMClient:
             # 빈 응답인 경우 재시도
             if not cleaned_response:
                 last_error = ValueError(f"LLM이 빈 응답을 반환했습니다 (원본 길이: {len(response)}, 원본 앞 100자: {response[:100]})")
-                time.sleep(1)
+                wait = 2 * (attempt + 1)
+                time.sleep(wait)
                 continue
 
             try:
                 return json.loads(cleaned_response)
             except json.JSONDecodeError:
                 last_error = ValueError(f"LLM이 반환한 JSON 형식이 유효하지 않습니다: {cleaned_response[:200]}")
-                time.sleep(1)
+                wait = 2 * (attempt + 1)
+                time.sleep(wait)
 
         raise last_error
 
@@ -188,8 +199,9 @@ class LLMClient:
 
                 if self._reasoning:
                     # reasoning 모델: temperature 제거, max_completion_tokens 사용
+                    # 추론 토큰도 이 예산에 포함되므로 최소 3배 여유분 확보
                     if max_tokens:
-                        kwargs["max_completion_tokens"] = max_tokens
+                        kwargs["max_completion_tokens"] = max(max_tokens * 3, 16384)
                 else:
                     # 일반 모델: 재시도마다 temperature 감소
                     kwargs["temperature"] = temperature - (attempt * 0.1)

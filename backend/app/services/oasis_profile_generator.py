@@ -82,9 +82,11 @@ class OasisAgentProfile:
             profile["profession"] = self.profession
         if self.interested_topics:
             profile["interested_topics"] = self.interested_topics
-        
+        if self.source_entity_type:
+            profile["entity_type"] = self.source_entity_type
+
         return profile
-    
+
     def to_twitter_format(self) -> Dict[str, Any]:
         """Twitter 플랫폼 형식으로 변환"""
         profile = {
@@ -731,6 +733,17 @@ class OasisProfileGenerator:
 - age는 반드시 정수 30, gender는 반드시 문자열 "other"
 - 기관 계정 발언은 그 신원 포지셔닝에 부합해야 함"""
     
+    # 개인(사람) 엔티티 유형 목록
+    INDIVIDUAL_ENTITY_TYPES = {
+        "student", "alumni", "professor", "person", "publicfigure",
+        "expert", "faculty", "official", "journalist", "activist",
+        "politician", "leader", "researcher", "analyst", "citizen"
+    }
+
+    def _is_individual_entity(self, entity_type_lower: str) -> bool:
+        """엔티티 유형이 개인(사람)인지 판별"""
+        return entity_type_lower in self.INDIVIDUAL_ENTITY_TYPES
+
     def _generate_profile_rule_based(
         self,
         entity_name: str,
@@ -792,17 +805,30 @@ class OasisProfileGenerator:
             }
 
         else:
-            # 기본 페르소나
-            return {
-                "bio": entity_summary[:150] if entity_summary else f"{entity_type}: {entity_name}",
-                "persona": entity_summary or f"{entity_name}은(는) 사회적 토론에 참여하는 참가자입니다.",
-                "age": random.randint(25, 50),
-                "gender": random.choice(["male", "female"]),
-                "mbti": random.choice(self.MBTI_TYPES),
-                "country": random.choice(self.COUNTRIES),
-                "profession": entity_type,
-                "interested_topics": ["일반", "사회 이슈"],
-            }
+            # 개인 엔티티 여부 판별 후 분기
+            if self._is_individual_entity(entity_type_lower):
+                return {
+                    "bio": entity_summary[:150] if entity_summary else f"{entity_type}: {entity_name}",
+                    "persona": entity_summary or f"{entity_name}은(는) 사회적 토론에 참여하는 참가자입니다.",
+                    "age": random.randint(25, 50),
+                    "gender": random.choice(["male", "female"]),
+                    "mbti": random.choice(self.MBTI_TYPES),
+                    "country": random.choice(self.COUNTRIES),
+                    "profession": entity_type,
+                    "interested_topics": ["일반", "사회 이슈"],
+                }
+            else:
+                # 비인간 엔티티 (기관/이벤트/국가 등)
+                return {
+                    "bio": entity_summary[:150] if entity_summary else f"{entity_name}의 공식 계정.",
+                    "persona": entity_summary or f"{entity_name}은(는) 공식 입장과 정보를 전달하는 기관/단체입니다.",
+                    "age": 30,
+                    "gender": "other",
+                    "mbti": "ISTJ",
+                    "country": "한국",
+                    "profession": entity_type,
+                    "interested_topics": ["일반", "사회 이슈"],
+                }
     
     def set_graph_id(self, graph_id: str):
         """Zep 검색용 그래프 ID 설정"""
@@ -1140,7 +1166,9 @@ class OasisProfileGenerator:
                 item["profession"] = profile.profession
             if profile.interested_topics:
                 item["interested_topics"] = profile.interested_topics
-            
+            if profile.source_entity_type:
+                item["entity_type"] = profile.source_entity_type
+
             data.append(item)
         
         with open(file_path, 'w', encoding='utf-8') as f:

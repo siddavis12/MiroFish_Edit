@@ -157,16 +157,16 @@ class SimulationManager:
         """파일에서 시뮬레이션 상태 로드"""
         if simulation_id in self._simulations:
             return self._simulations[simulation_id]
-        
+
         sim_dir = self._get_simulation_dir(simulation_id)
         state_file = os.path.join(sim_dir, "state.json")
-        
+
         if not os.path.exists(state_file):
             return None
-        
+
         with open(state_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        
+
         state = SimulationState(
             simulation_id=simulation_id,
             project_id=data.get("project_id", ""),
@@ -186,7 +186,19 @@ class SimulationManager:
             updated_at=data.get("updated_at", datetime.now().isoformat()),
             error=data.get("error"),
         )
-        
+
+        # 서버 재시작 후 고아 상태 교정:
+        # RUNNING 상태이지만 실제로 추적 중인 프로세스가 없으면 stopped로 변경
+        if state.status == SimulationStatus.RUNNING:
+            from .simulation_runner import SimulationRunner
+            if simulation_id not in SimulationRunner.get_running_simulations():
+                logger.warning(
+                    f"고아 RUNNING 상태 감지 (추적 중인 프로세스 없음), stopped로 교정: {simulation_id}"
+                )
+                state.status = SimulationStatus.STOPPED
+                state.error = state.error or "서버 재시작으로 시뮬레이션이 중단됨"
+                self._save_simulation_state(state)
+
         self._simulations[simulation_id] = state
         return state
     

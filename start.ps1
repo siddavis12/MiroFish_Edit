@@ -4,6 +4,11 @@
 $ErrorActionPreference = "Stop"
 $ProjectRoot = $PSScriptRoot
 
+# 콘솔 인코딩을 UTF-8로 설정 (한국어 깨짐 방지)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
+chcp 65001 | Out-Null
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  MiroFish 실행 스크립트" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
@@ -62,9 +67,10 @@ if (Test-Path $neo4jBat) {
       if ($machineJavaHome) { $env:JAVA_HOME = $machineJavaHome }
     }
 
-    # 백그라운드 프로세스로 Neo4j console 모드 시작
+    # 백그라운드 프로세스로 Neo4j console 모드 시작 (PID 추적)
     $env:NEO4J_HOME = Join-Path $ProjectRoot "neo4j"
-    Start-Process powershell -ArgumentList "-WindowStyle Hidden -Command `"& '$neo4jBat' console`"" -WindowStyle Hidden
+    $neo4jProc = Start-Process powershell -ArgumentList "-WindowStyle Hidden -Command `"& '$neo4jBat' console`"" -WindowStyle Hidden -PassThru
+    $neo4jPid = $neo4jProc.Id
 
     # 연결 대기 (최대 30초)
     $waited = 0
@@ -160,10 +166,57 @@ Write-Host ""
 Write-Host "종료하려면 Ctrl+C를 누르세요." -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
 
-# concurrently로 프론트엔드 + 백엔드 동시 실행 (양쪽 로그 모두 표시)
+# 프로세스 정리 함수
+function Stop-AllDevProcesses {
+  Write-Host ""
+  Write-Host ">> 프로세스 정리 중..." -ForegroundColor Yellow
+
+  # 백엔드 Flask 프로세스 정리 (포트 5001 점유 프로세스)
+  try {
+    $flaskPids = (netstat -ano 2>$null | Select-String ":5001\s.*LISTENING" |
+      ForEach-Object { ($_ -split '\s+')[-1] } | Sort-Object -Unique)
+    foreach ($pid in $flaskPids) {
+      if ($pid -and $pid -ne '0') {
+        taskkill /F /T /PID $pid 2>$null | Out-Null
+      }
+    }
+  } catch {}
+
+  # 프론트엔드 Vite 프로세스 정리 (포트 3000 점유 프로세스)
+  try {
+    $vitePids = (netstat -ano 2>$null | Select-String ":3000\s.*LISTENING" |
+      ForEach-Object { ($_ -split '\s+')[-1] } | Sort-Object -Unique)
+    foreach ($pid in $vitePids) {
+      if ($pid -and $pid -ne '0') {
+        taskkill /F /T /PID $pid 2>$null | Out-Null
+      }
+    }
+  } catch {}
+
+  # node 자식 프로세스 정리 (concurrently가 남긴 고아 프로세스)
+  try {
+    Get-Process -Name "node" -ErrorAction SilentlyContinue |
+      Where-Object { $_.MainWindowTitle -eq "" } |
+      Stop-Process -Force -ErrorAction SilentlyContinue
+  } catch {}
+
+  # Neo4j 정리 — neo4j.bat stop 우선, 실패 시 PID 강제 종료
+  if (Test-Path $neo4jBat) {
+    Write-Host "  Neo4j 종료 중..." -ForegroundColor Gray
+    & $neo4jBat stop 2>$null
+    if ($neo4jPid) {
+      try { taskkill /F /T /PID $neo4jPid 2>$null | Out-Null } catch {}
+    }
+  }
+
+  Write-Host "[OK] 모든 프로세스 정리 완료" -ForegroundColor Green
+}
+
+# concurrently로 프론트엔드 + 백엔드 동시 실행
 Push-Location $ProjectRoot
 try {
   npm run dev
 } finally {
   Pop-Location
+  Stop-AllDevProcesses
 }

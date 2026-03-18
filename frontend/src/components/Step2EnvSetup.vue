@@ -544,8 +544,8 @@
         </div>
         
         <div class="modal-body">
-          <!-- 기본 정보 -->
-          <div class="modal-info-grid">
+          <!-- 기본 정보: 사람 엔티티 -->
+          <div v-if="isPersonEntity(selectedProfile)" class="modal-info-grid">
             <div class="info-item">
               <span class="info-label">이벤트 표출 나이</span>
               <span class="info-value">{{ selectedProfile.age || '-' }} 세</span>
@@ -561,6 +561,25 @@
             <div class="info-item">
               <span class="info-label">이벤트 표출 MBTI</span>
               <span class="info-value mbti">{{ selectedProfile.mbti || '-' }}</span>
+            </div>
+          </div>
+          <!-- 기본 정보: 비인간 엔티티 (기관/이벤트/국가 등) -->
+          <div v-else class="modal-info-grid">
+            <div class="info-item">
+              <span class="info-label">엔티티 유형</span>
+              <span class="info-value">{{ selectedProfile.entity_type || '기관/단체' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">국가/지역</span>
+              <span class="info-value">{{ selectedProfile.country || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">기능/역할</span>
+              <span class="info-value">{{ selectedProfile.profession || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">계정 유형</span>
+              <span class="info-value">공식 대표 계정</span>
             </div>
           </div>
 
@@ -607,7 +626,7 @@
             </div>
 
             <div class="persona-content">
-              <p class="section-persona">{{ selectedProfile.persona }}</p>
+              <div class="section-persona" v-html="formatPersonaText(selectedProfile.persona)"></div>
             </div>
           </div>
         </div>
@@ -640,6 +659,7 @@ import {
   getSimulationConfig,
   getSimulationConfigRealtime 
 } from '../api/simulation'
+import { renderMarkdown } from '../utils/markdown'
 
 const props = defineProps({
   simulationId: String,  // 부모 컴포넌트에서 전달
@@ -662,6 +682,35 @@ const expectedTotal = ref(null)
 const simulationConfig = ref(null)
 const selectedProfile = ref(null)
 const showProfilesDetail = ref(true)
+
+// 사람 엔티티 유형 판별
+const PERSON_TYPES = ['student', 'alumni', 'professor', 'person', 'publicfigure',
+  'expert', 'faculty', 'official', 'journalist', 'activist',
+  'politician', 'leader', 'researcher', 'analyst', 'citizen']
+
+const isPersonEntity = (profile) => {
+  const type = (profile.entity_type || '').toLowerCase()
+  return PERSON_TYPES.includes(type)
+}
+
+// 페르소나 텍스트 구조화 전처리 후 마크다운 렌더링
+const formatPersonaText = (text) => {
+  if (!text) return ''
+  let formatted = text
+  const sectionKeywords = [
+    '기본 정보', '인물 배경', '성격 특성', '소셜 미디어 행동', '입장 관점',
+    '독특한 특징', '개인 기억', '기관 기본 정보', '계정 포지셔닝',
+    '발언 스타일', '게시 콘텐츠', '입장 태도', '특별 참고', '기관 기억',
+    '행동 특성', '사회적 관계', '핵심 관점', '배경 정보'
+  ]
+  for (const keyword of sectionKeywords) {
+    formatted = formatted.replace(
+      new RegExp(`(${keyword}[^:：.]*?)[:：]\\s*`, 'g'),
+      '\n\n**$1**\n'
+    )
+  }
+  return renderMarkdown(formatted)
+}
 
 // 로그 중복 제거: 마지막 출력의 핵심 정보 기록
 let lastLoggedMessage = ''
@@ -2046,6 +2095,29 @@ onUnmounted(() => {
   line-height: 1.8;
   margin: 0;
   text-align: justify;
+}
+
+.section-persona strong {
+  display: inline-block;
+  color: #333;
+  font-weight: 600;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.section-persona .md-p {
+  margin: 4px 0;
+}
+
+.section-persona .md-ul,
+.section-persona .md-ol {
+  margin: 4px 0 4px 16px;
+  padding: 0;
+}
+
+.section-persona .md-li,
+.section-persona .md-oli {
+  margin: 2px 0;
 }
 
 /* System Logs */

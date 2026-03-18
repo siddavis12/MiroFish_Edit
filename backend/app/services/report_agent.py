@@ -1299,22 +1299,22 @@ class ReportAgent:
                     f"심층 검색 및 작성 중 ({tool_calls_count}/{self.MAX_TOOL_CALLS_PER_SECTION})"
                 )
             
-            # LLM 호출
+            # LLM 호출 (reasoning 모델은 llm_client에서 자동으로 토큰 예산 보정)
             response = self.llm.chat(
                 messages=messages,
                 temperature=0.5,
                 max_tokens=4096
             )
 
-            # LLM 반환이 None인지 확인 (API 예외 또는 내용 비어있음)
-            if response is None:
-                logger.warning(f"섹션 {section.title} {iteration + 1}번째 반복: LLM이 None 반환")
+            # LLM 반환이 None 또는 빈 문자열인지 확인
+            if not response or not response.strip():
+                logger.warning(f"섹션 {section.title} {iteration + 1}번째 반복: LLM이 빈 응답 반환")
                 # 반복 횟수가 남아있으면 메시지를 추가하고 재시도
                 if iteration < max_iterations - 1:
                     messages.append({"role": "assistant", "content": "(응답 비어있음)"})
-                    messages.append({"role": "user", "content": "내용 생성을 계속하세요."})
+                    messages.append({"role": "user", "content": "이전 도구 호출 결과를 바탕으로 이 섹션의 내용을 반드시 작성하세요. 'Final Answer:'로 시작하여 상세한 분석 내용을 출력하세요."})
                     continue
-                # 마지막 반복에서도 None 반환, 루프를 빠져나와 강제 마무리 진입
+                # 마지막 반복에서도 빈 반환, 루프를 빠져나와 강제 마무리 진입
                 break
 
             logger.debug(f"LLM 응답: {response[:200]}...")
@@ -1486,9 +1486,19 @@ class ReportAgent:
                 continue
 
             # 도구 호출이 충분하고, LLM이 내용을 출력했지만 "Final Answer:" 접두사가 없음
-            # 이 내용을 최종 답변으로 직접 채택, 더 이상 공회전하지 않음
-            logger.info(f"섹션 {section.title}에서 'Final Answer:' 접두사 미감지, LLM 출력을 최종 내용으로 직접 채택 (도구 호출: {tool_calls_count}회)")
             final_answer = response.strip()
+
+            # 빈 응답이면 최종 답변으로 채택하지 않고 재시도
+            if not final_answer and iteration < max_iterations - 1:
+                logger.warning(f"섹션 {section.title}: 도구 호출 충분하나 LLM이 빈 응답 반환, 재시도")
+                messages.append({
+                    "role": "user",
+                    "content": "이전 도구 호출 결과를 바탕으로 이 섹션의 내용을 반드시 작성하세요. 'Final Answer:'로 시작하여 상세한 분석 내용을 출력하세요."
+                })
+                continue
+
+            # 비어있지 않은 내용을 최종 답변으로 직접 채택
+            logger.info(f"섹션 {section.title}에서 'Final Answer:' 접두사 미감지, LLM 출력을 최종 내용으로 직접 채택 (도구 호출: {tool_calls_count}회)")
 
             if self.report_logger:
                 self.report_logger.log_section_content(
@@ -1509,9 +1519,9 @@ class ReportAgent:
             max_tokens=4096
         )
 
-        # 강제 마무리 시 LLM 반환이 None인지 확인
-        if response is None:
-            logger.error(f"섹션 {section.title} 강제 마무리 시 LLM이 None 반환, 기본 오류 메시지 사용")
+        # 강제 마무리 시 LLM 반환이 None 또는 빈 문자열인지 확인
+        if not response or not response.strip():
+            logger.error(f"섹션 {section.title} 강제 마무리 시 LLM이 빈 응답 반환, 기본 오류 메시지 사용")
             final_answer = f"(이 섹션 생성 실패: LLM이 빈 응답을 반환했습니다. 나중에 다시 시도하세요)"
         elif "Final Answer:" in response:
             final_answer = response.split("Final Answer:")[-1].strip()

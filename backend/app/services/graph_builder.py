@@ -166,13 +166,19 @@ class GraphBuilderService:
                         for chunk in batch_chunks
                     }
                     for future in as_completed(futures):
-                        extraction = future.result()
+                        try:
+                            extraction = future.result(timeout=180)
+                        except Exception as e:
+                            logger.error(f"청크 추출 실패 (건너뜀): {e}")
+                            continue
                         if extraction.entities or extraction.relationships:
                             self.store.merge_extraction(graph_id, extraction)
                             for e in extraction.entities:
                                 name = e.get("name", "")
                                 if name and name not in existing_entities:
                                     existing_entities.append(name)
+                        else:
+                            logger.warning(f"청크에서 추출 결과 없음 (배치 {batch_num})")
 
             # 5. ChromaDB에 벡터 인덱스 구축
             self.task_manager.update_task(
@@ -253,7 +259,11 @@ class GraphBuilderService:
                 }
                 for future in as_completed(futures):
                     chunk = futures[future]
-                    extraction = future.result()
+                    try:
+                        extraction = future.result(timeout=180)
+                    except Exception as e:
+                        logger.error(f"청크 추출 실패 (건너뜀, 청크 길이: {len(chunk)}): {e}")
+                        continue
                     if extraction.entities or extraction.relationships:
                         logger.info(f"추출 결과: 엔티티 {len(extraction.entities)}개, 관계 {len(extraction.relationships)}개 → Neo4j 저장 시도")
                         self.store.merge_extraction(graph_id, extraction)
