@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiroFish Pipeline Guide</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3345;
+    --text: #e4e6ef;
+    --text-dim: #8b8fa3;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffd93d;
+    --accent5: #4ecdc4;
+    --step1: #6c63ff;
+    --step2: #00d4aa;
+    --step3: #ff6b6b;
+    --step4: #ffd93d;
+    --step5: #4ecdc4;
+    --glow1: rgba(108,99,255,0.3);
+    --glow2: rgba(0,212,170,0.3);
+    --glow3: rgba(255,107,107,0.3);
+    --glow4: rgba(255,217,61,0.3);
+    --glow5: rgba(78,205,196,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--glow1) 0%, transparent 70%);
+    top: -100px; left: -100px;
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--glow2) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    animation: float 10s ease-in-out infinite reverse;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -30px) scale(1.1); }
+  }
+
+  .hero-content {
+    text-align: center;
+    z-index: 1;
+    padding: 2rem;
+  }
+
+  .logo {
+    font-size: 4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    letter-spacing: -2px;
+  }
+
+  .logo-sub {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin-bottom: 3rem;
+    max-width: 500px;
+  }
+
+  .hero-pipeline {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+
+  .hero-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid transparent;
+  }
+
+  .hero-step:hover { transform: translateY(-2px); }
+  .hero-step[data-s="1"] { background: rgba(108,99,255,0.15); color: var(--step1); border-color: rgba(108,99,255,0.3); }
+  .hero-step[data-s="2"] { background: rgba(0,212,170,0.15); color: var(--step2); border-color: rgba(0,212,170,0.3); }
+  .hero-step[data-s="3"] { background: rgba(255,107,107,0.15); color: var(--step3); border-color: rgba(255,107,107,0.3); }
+  .hero-step[data-s="4"] { background: rgba(255,217,61,0.15); color: var(--step4); border-color: rgba(255,217,61,0.3); }
+  .hero-step[data-s="5"] { background: rgba(78,205,196,0.15); color: var(--step5); border-color: rgba(78,205,196,0.3); }
+
+  .hero-arrow { color: var(--text-dim); font-size: 1.2rem; }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    animation: bounce 2s infinite;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    z-index: 1;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* ── Overview Diagram ── */
+  .overview {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-desc {
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+  }
+
+  /* Flow Diagram */
+  .flow-container {
+    position: relative;
+    padding: 2rem 0;
+  }
+
+  .flow-track {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--step1), var(--step2), var(--step3), var(--step4), var(--step5));
+    transform: translateX(-50%);
+    opacity: 0.3;
+  }
+
+  .flow-progress {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 3px;
+    height: 0%;
+    background: linear-gradient(to bottom, var(--step1), var(--step2), var(--step3), var(--step4), var(--step5));
+    transform: translateX(-50%);
+    transition: height 0.3s;
+  }
+
+  /* ── Step Cards ── */
+  .step-section {
+    position: relative;
+    margin-bottom: 6rem;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .step-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+  }
+
+  .step-num {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .step-num::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 20px;
+    opacity: 0.4;
+    animation: pulse-ring 3s infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+    50% { box-shadow: 0 0 0 8px transparent; }
+  }
+
+  .step-section[data-step="1"] .step-num { background: rgba(108,99,255,0.2); color: var(--step1); }
+  .step-section[data-step="2"] .step-num { background: rgba(0,212,170,0.2); color: var(--step2); }
+  .step-section[data-step="3"] .step-num { background: rgba(255,107,107,0.2); color: var(--step3); }
+  .step-section[data-step="4"] .step-num { background: rgba(255,217,61,0.2); color: var(--step4); }
+  .step-section[data-step="5"] .step-num { background: rgba(78,205,196,0.2); color: var(--step5); }
+
+  .step-info h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .step-info .eng {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  .step-info p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    margin-top: 0.2rem;
+  }
+
+  /* ── Detail Cards ── */
+  .step-body {
+    display: grid;
+    gap: 1.5rem;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+    opacity: 0;
+  }
+
+  .step-body.open {
+    max-height: 3000px;
+    opacity: 1;
+  }
+
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s;
+  }
+
+  .detail-card:hover {
+    border-color: rgba(108,99,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .card-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-desc {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  /* ── Sub-process flow ── */
+  .process-flow {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .process-node {
+    flex: 1;
+    min-width: 140px;
+    padding: 1rem;
+    background: var(--surface2);
+    border-radius: 12px;
+    text-align: center;
+    position: relative;
+    font-size: 0.85rem;
+  }
+
+  .process-node + .process-node::before {
+    content: '→';
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 1.2rem;
+  }
+
+  .process-node .node-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .process-node .node-label {
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .process-node .node-detail {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.2rem;
+  }
+
+  /* ── Data transfer block ── */
+  .data-transfer {
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-top: 1rem;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: var(--accent2);
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .data-transfer::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    background: var(--surface2);
+    padding: 0 8px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .data-transfer pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* ── Tech Badges ── */
+  .tech-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.8rem;
+  }
+
+  .badge {
+    padding: 0.25rem 0.7rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+  }
+
+  .badge-neo4j { background: rgba(0,140,200,0.1); color: #00a3e0; border-color: rgba(0,140,200,0.3); }
+  .badge-chroma { background: rgba(255,179,0,0.1); color: #ffb300; border-color: rgba(255,179,0,0.3); }
+  .badge-llm { background: rgba(108,99,255,0.1); color: #8b80ff; border-color: rgba(108,99,255,0.3); }
+  .badge-oasis { background: rgba(255,107,107,0.1); color: #ff8a8a; border-color: rgba(255,107,107,0.3); }
+  .badge-flask { background: rgba(0,212,170,0.1); color: #00d4aa; border-color: rgba(0,212,170,0.3); }
+  .badge-vue { background: rgba(66,184,131,0.1); color: #42b883; border-color: rgba(66,184,131,0.3); }
+  .badge-d3 { background: rgba(245,130,48,0.1); color: #f58230; border-color: rgba(245,130,48,0.3); }
+  .badge-react-pattern { background: rgba(255,217,61,0.1); color: #ffd93d; border-color: rgba(255,217,61,0.3); }
+
+  /* ── Interactive Flow Diagram (SVG-like) ── */
+  .architecture-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .arch-layer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .arch-layer h4 {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+  }
+
+  .arch-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .arch-item {
+    padding: 0.5rem;
+    background: var(--surface2);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .arch-item:hover {
+    background: rgba(108,99,255,0.15);
+    transform: scale(1.02);
+  }
+
+  /* ── Animated Agent Sim ── */
+  .sim-visual {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    position: relative;
+    min-height: 300px;
+    overflow: hidden;
+  }
+
+  .sim-platform {
+    display: inline-flex;
+    gap: 2rem;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .platform-box {
+    flex: 1;
+    min-width: 260px;
+    max-width: 400px;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 1.2rem;
+  }
+
+  .platform-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .sim-post {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideUp 0.4s forwards;
+  }
+
+  .sim-post .author {
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.2rem;
+  }
+
+  .sim-post .content {
+    color: var(--text-dim);
+  }
+
+  .sim-post .metrics {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── ReACT visual ── */
+  .react-chain {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .react-step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-left: 2px solid var(--border);
+    padding-left: 1.5rem;
+    position: relative;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.5s;
+  }
+
+  .react-step.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .react-step::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 1.2rem;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .react-step[data-type="thought"]::before { background: var(--step1); }
+  .react-step[data-type="action"]::before { background: var(--step3); }
+  .react-step[data-type="observation"]::before { background: var(--step2); }
+  .react-step[data-type="reflection"]::before { background: var(--step4); }
+
+  .react-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 80px;
+    padding-top: 2px;
+  }
+
+  .react-step[data-type="thought"] .react-label { color: var(--step1); }
+  .react-step[data-type="action"] .react-label { color: var(--step3); }
+  .react-step[data-type="observation"] .react-label { color: var(--step2); }
+  .react-step[data-type="reflection"] .react-label { color: var(--step4); }
+
+  .react-content {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ── Stats Counter ── */
+  .stats-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+  }
+
+  .stat-card {
+    flex: 1;
+    min-width: 120px;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.2rem;
+  }
+
+  /* ── Chat simulation ── */
+  .chat-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .chat-header {
+    background: var(--surface2);
+    padding: 0.8rem 1.2rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .chat-body {
+    padding: 1.2rem;
+    max-height: 350px;
+    overflow-y: auto;
+  }
+
+  .chat-msg {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-msg.user { align-items: flex-end; }
+  .chat-msg.agent { align-items: flex-start; }
+
+  .chat-bubble {
+    max-width: 80%;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .chat-msg.user .chat-bubble {
+    background: rgba(108,99,255,0.2);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-bottom-right-radius: 4px;
+  }
+
+  .chat-msg.agent .chat-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--text-dim);
+  }
+
+  .chat-sender {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: var(--text-dim);
+  }
+
+  .chat-input-bar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.8rem 1.2rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--text);
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+
+  .chat-send {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .chat-send:hover { opacity: 0.85; transform: scale(1.02); }
+
+  /* ── Toggle ── */
+  .toggle-icon {
+    margin-left: auto;
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    transition: transform 0.3s;
+  }
+
+  .step-header.active .toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .logo { font-size: 2.5rem; }
+    .hero-pipeline { flex-direction: column; }
+    .hero-arrow { transform: rotate(90deg); }
+    .architecture-grid { grid-template-columns: 1fr; }
+    .process-flow { flex-direction: column; }
+    .process-node + .process-node::before { content: '↓'; left: 50%; top: -14px; transform: translateX(-50%); }
+    .sim-platform { flex-direction: column; }
+    .step-header h2 { font-size: 1.2rem; }
+  }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dotted var(--text-dim);
+  }
+
+  .tooltip:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 10;
+    color: var(--text);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  /* ── Highlight animation for active step ── */
+  .step-section[data-step].highlight .step-num {
+    animation: glow-pulse 1s ease-in-out;
+  }
+
+  @keyframes glow-pulse {
+    0% { box-shadow: 0 0 0 0 currentColor; }
+    50% { box-shadow: 0 0 20px 4px currentColor; }
+    100% { box-shadow: 0 0 0 0 currentColor; }
+  }
+
+  /* ── Mini-diagram for data flow ── */
+  .dataflow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+
+  .df-box {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .df-arrow {
+    color: var(--text-dim);
+    font-size: 1.2rem;
+  }
+
+  .df-box.input { background: rgba(108,99,255,0.15); color: var(--step1); }
+  .df-box.process { background: rgba(255,107,107,0.15); color: var(--step3); }
+  .df-box.output { background: rgba(0,212,170,0.15); color: var(--step2); }
+  .df-box.store { background: rgba(255,217,61,0.15); color: var(--step4); }
+
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="logo">MiroFish</div>
+    <p class="logo-sub">다중 에이전트 기반 군중 지능 예측 엔진<br>시드 문서에서 미래 예측 보고서까지</p>
+
+    <div class="hero-pipeline">
+      <div class="hero-step" data-s="1" onclick="scrollToStep(1)">
+        <span>📄</span> 그래프 구축
+      </div>
+      <span class="hero-arrow">→</span>
+      <div class="hero-step" data-s="2" onclick="scrollToStep(2)">
+        <span>🧬</span> 환경 구성
+      </div>
+      <span class="hero-arrow">→</span>
+      <div class="hero-step" data-s="3" onclick="scrollToStep(3)">
+        <span>🌐</span> 시뮬레이션
+      </div>
+      <span class="hero-arrow">→</span>
+      <div class="hero-step" data-s="4" onclick="scrollToStep(4)">
+        <span>📊</span> 리포트
+      </div>
+      <span class="hero-arrow">→</span>
+      <div class="hero-step" data-s="5" onclick="scrollToStep(5)">
+        <span>💬</span> 인터랙션
+      </div>
+    </div>
+
+    <div class="stats-row" style="justify-content:center;">
+      <div class="stat-card">
+        <div class="stat-val" id="counter-steps">5</div>
+        <div class="stat-label">파이프라인 단계</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">19</div>
+        <div class="stat-label">백엔드 서비스</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">2</div>
+        <div class="stat-label">소셜 플랫폼</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">3</div>
+        <div class="stat-label">ReACT 도구</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">↓ 스크롤하여 각 단계를 살펴보세요</div>
+</section>
+
+<!-- ═══════════════ PIPELINE DETAIL ═══════════════ -->
+<main class="overview">
+  <h2 class="section-title">파이프라인 상세 가이드</h2>
+  <p class="section-desc">각 단계를 클릭하면 상세 내용이 펼쳐집니다. 시드 문서 하나로 시작해서 인터랙티브 보고서까지 도달하는 전체 여정을 탐색하세요.</p>
+
+  <!-- ──── STEP 1 ──── -->
+  <div class="step-section" data-step="1" id="step-1">
+    <div class="step-header" onclick="toggleStep(1)">
+      <div class="step-num">1</div>
+      <div class="step-info">
+        <h2>그래프 구축 <span class="eng">Graph Build</span></h2>
+        <p>시드 문서에서 지식 그래프를 자동 생성합니다</p>
+      </div>
+      <span class="toggle-icon">▼</span>
+    </div>
+
+    <div class="step-body" id="step-body-1">
+      <!-- Data flow mini -->
+      <div class="dataflow">
+        <div class="df-box input">PDF / MD / TXT</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">LLM 온톨로지 생성</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">텍스트 청킹</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">엔티티 추출</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box store">Neo4j + ChromaDB</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="detail-card">
+          <div class="card-icon">📤</div>
+          <div class="card-title">1-1. 문서 업로드 & 텍스트 추출</div>
+          <div class="card-desc">
+            PDF, Markdown, TXT 파일을 업로드합니다. 시스템이 자동으로 텍스트를 추출하고 전처리(정규화, 클렌징)합니다.
+            사용자는 동시에 <strong>시뮬레이션 요구사항</strong>을 자연어로 입력합니다.
+          </div>
+          <div class="tech-badges">
+            <span class="badge badge-flask">Flask API</span>
+            <span class="badge badge-vue">Vue 3</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">🧠</div>
+          <div class="card-title">1-2. 온톨로지 자동 생성</div>
+          <div class="card-desc">
+            LLM이 문서 + 요구사항을 분석하여 JSON 스키마 형태의 온톨로지를 생성합니다.<br>
+            <strong>엔티티 타입</strong>: Person, Organization, Media, Government 등 10종<br>
+            <strong>엣지 타입</strong>: INFLUENCES, REPORTS_ON, AFFILIATES_WITH 등
+          </div>
+          <div class="tech-badges">
+            <span class="badge badge-llm">LLM (GPT)</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">🔨</div>
+          <div class="card-title">1-3. GraphRAG 구축</div>
+          <div class="card-desc">
+            텍스트를 <span class="tooltip" data-tip="기본값: 500자, 50자 중첩">오버래핑 청크</span>로 분할한 뒤,
+            각 청크에서 LLM이 온톨로지에 맞는 엔티티와 관계를 추출합니다.
+            추출 결과는 <strong>Neo4j 그래프</strong>에 노드/엣지로 저장되고,
+            텍스트 청크는 <strong>ChromaDB</strong>에 벡터 임베딩됩니다.
+          </div>
+          <div class="tech-badges">
+            <span class="badge badge-neo4j">Neo4j</span>
+            <span class="badge badge-chroma">ChromaDB</span>
+            <span class="badge badge-llm">LLM 추출</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">📊</div>
+          <div class="card-title">1-4. 실시간 진행률 모니터링</div>
+          <div class="card-desc">
+            그래프 구축은 백그라운드 스레드에서 비동기 실행됩니다.
+            프론트엔드가 2초 간격으로 진행률(0%→100%)을 폴링하여
+            실시간 프로그레스 바를 표시합니다.
+          </div>
+          <div class="tech-badges">
+            <span class="badge badge-flask">Background Thread</span>
+            <span class="badge badge-vue">Polling 2s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-transfer" data-label="→ Step 2로 전달되는 데이터">
+        <pre>{
+  "project_id": "proj_abc123",
+  "graph_id": "mirofish_20260319_142530",
+  "ontology": {
+    "entity_types": ["Person", "Organization", "Media", ...],
+    "edge_types": ["INFLUENCES", "REPORTS_ON", ...]
+  },
+  "node_count": 450,
+  "edge_count": 2340
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──── STEP 2 ──── -->
+  <div class="step-section" data-step="2" id="step-2">
+    <div class="step-header" onclick="toggleStep(2)">
+      <div class="step-num">2</div>
+      <div class="step-info">
+        <h2>환경 구성 <span class="eng">Environment Setup</span></h2>
+        <p>그래프에서 에이전트를 추출하고 시뮬레이션 환경을 설정합니다</p>
+      </div>
+      <span class="toggle-icon">▼</span>
+    </div>
+
+    <div class="step-body" id="step-body-2">
+      <div class="dataflow">
+        <div class="df-box input">Knowledge Graph</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">엔티티 필터링</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">프로필 생성</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">설정 생성</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box output">OASIS Ready</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+        <div class="detail-card">
+          <div class="card-icon">🔍</div>
+          <div class="card-title">2-1. 엔티티 필터링</div>
+          <div class="card-desc">
+            Neo4j에서 전체 엔티티를 조회한 후, <strong>"실제 행동 가능한 에이전트"</strong>만 선별합니다.<br><br>
+            ✅ Person, Organization, Media, Government<br>
+            ❌ 추상 개념, 주제, 관점 등 제외<br><br>
+            각 엔티티의 연결 관계와 컨텍스트도 함께 수집합니다.
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">👤</div>
+          <div class="card-title">2-2. 에이전트 프로필 생성</div>
+          <div class="card-desc">
+            LLM이 각 엔티티를 소셜 미디어 사용자로 변환합니다.<br><br>
+            <strong>Twitter 프로필</strong>: username, bio, follower_count, MBTI, 관심사 (CSV)<br>
+            <strong>Reddit 프로필</strong>: karma, 관심 서브레딧 (JSON)<br><br>
+            source_entity_uuid로 원본 그래프 노드와 매핑 유지
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">2-3. 시뮬레이션 설정</div>
+          <div class="card-desc">
+            LLM이 최적의 시뮬레이션 파라미터를 생성합니다.<br><br>
+            <strong>시간 설정</strong>: 피크 시간대, 활동 패턴<br>
+            <strong>이벤트 설정</strong>: 핵심 토론 주제, 트렌드 시점<br>
+            <strong>에이전트 설정</strong>: 활동 수준(0.0~1.0), 시간당 포스트 수
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent profile example -->
+      <div class="detail-card" style="margin-top:1rem;">
+        <div class="card-title">에이전트 프로필 예시</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem;">
+          <div style="background:var(--bg); border-radius:8px; padding:1rem;">
+            <div style="font-weight:700; color:var(--step1); margin-bottom:0.5rem; font-size:0.85rem;">🐦 Twitter Agent</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.8;">
+              <strong>@kim_reporter</strong><br>
+              Name: 김서연 (Seoyeon Kim)<br>
+              Bio: "디지털 미디어 전문기자. 기술과 사회 이슈를 다룹니다."<br>
+              Followers: 12,400 | Following: 890<br>
+              MBTI: ENTJ | 관심사: AI, 정책, 경제
+            </div>
+          </div>
+          <div style="background:var(--bg); border-radius:8px; padding:1rem;">
+            <div style="font-weight:700; color:var(--step3); margin-bottom:0.5rem; font-size:0.85rem;">🤖 Reddit Agent</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); line-height:1.8;">
+              <strong>u/tech_policy_wonk</strong><br>
+              Name: Park Jimin<br>
+              Karma: 8,750<br>
+              Subreddits: r/technology, r/policy, r/economics<br>
+              Activity: 0.7 (활발)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-transfer" data-label="→ Step 3로 전달되는 데이터">
+        <pre>{
+  "simulation_id": "sim_xyz789",
+  "entity_count": 250,
+  "agent_profiles": { "twitter": 180, "reddit": 70 },
+  "files": ["twitter_profiles.csv", "reddit_profiles.json", "simulation_config.json"]
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──── STEP 3 ──── -->
+  <div class="step-section" data-step="3" id="step-3">
+    <div class="step-header" onclick="toggleStep(3)">
+      <div class="step-num">3</div>
+      <div class="step-info">
+        <h2>시뮬레이션 <span class="eng">OASIS Simulation</span></h2>
+        <p>에이전트들이 소셜 플랫폼에서 실제처럼 활동합니다</p>
+      </div>
+      <span class="toggle-icon">▼</span>
+    </div>
+
+    <div class="step-body" id="step-body-3">
+      <div class="dataflow">
+        <div class="df-box input">Agent Profiles</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">OASIS Engine</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box output">Twitter 시뮬레이션</div>
+        <span class="df-arrow">+</span>
+        <div class="df-box output">Reddit 시뮬레이션</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box store">Action Logs</div>
+      </div>
+
+      <!-- Simulation Visual -->
+      <div class="sim-visual">
+        <div style="text-align:center; margin-bottom:1rem;">
+          <button onclick="runSimDemo()" style="background:var(--step3); color:white; border:none; padding:0.6rem 1.5rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; transition:all 0.2s;">
+            ▶ 시뮬레이션 데모 실행
+          </button>
+          <span style="font-size:0.8rem; color:var(--text-dim); margin-left:1rem;" id="sim-round">라운드: 0 / 30</span>
+        </div>
+
+        <div class="sim-platform">
+          <div class="platform-box">
+            <div class="platform-title">
+              <span>🐦</span> Twitter (Info Plaza)
+            </div>
+            <div id="twitter-feed"></div>
+          </div>
+          <div class="platform-box">
+            <div class="platform-title">
+              <span>🤖</span> Reddit (Topic Community)
+            </div>
+            <div id="reddit-feed"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top:1.5rem;">
+        <div class="detail-card">
+          <div class="card-icon">🎮</div>
+          <div class="card-title">에이전트 행동 유형</div>
+          <div class="card-desc">
+            <strong>Twitter</strong>: POST, LIKE, REPOST, QUOTE, FOLLOW, IDLE<br>
+            <strong>Reddit</strong>: POST, COMMENT, LIKE, DISLIKE, SEARCH, TREND, FOLLOW, MUTE, REFRESH, IDLE<br><br>
+            각 에이전트는 자신의 성격, 관심사, 현재 트렌드, 시간대별 활동 패턴에 따라 자율적으로 행동을 선택합니다.
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="card-icon">💾</div>
+          <div class="card-title">메모리 업데이트</div>
+          <div class="card-desc">
+            각 라운드 종료 후, <strong>GraphMemoryManager</strong>가 Neo4j 그래프를 업데이트합니다.<br><br>
+            • 에이전트의 시뮬레이션 기억<br>
+            • 새로 형성된 관계<br>
+            • 생성한 콘텐츠<br>
+            • 관찰된 상호작용 패턴
+          </div>
+          <div class="tech-badges">
+            <span class="badge badge-oasis">CAMEL-OASIS</span>
+            <span class="badge badge-neo4j">Neo4j</span>
+            <span class="badge badge-llm">LLM Agent</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-transfer" data-label="→ Step 4로 전달되는 데이터">
+        <pre>{
+  "simulation_id": "sim_xyz789",
+  "total_rounds": 30,
+  "twitter_actions": 4250,
+  "reddit_actions": 3180,
+  "active_agents": 250,
+  "files": ["agent_actions.jsonl"],
+  "memory_updates_applied": true
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──── STEP 4 ──── -->
+  <div class="step-section" data-step="4" id="step-4">
+    <div class="step-header" onclick="toggleStep(4)">
+      <div class="step-num">4</div>
+      <div class="step-info">
+        <h2>리포트 생성 <span class="eng">Report Generation</span></h2>
+        <p>ReACT 패턴으로 시뮬레이션 결과를 분석하고 보고서를 작성합니다</p>
+      </div>
+      <span class="toggle-icon">▼</span>
+    </div>
+
+    <div class="step-body" id="step-body-4">
+      <div class="dataflow">
+        <div class="df-box input">Action Logs + Graph</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box process">ReportAgent</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box output">분석 보고서</div>
+      </div>
+
+      <!-- ReACT Chain Demo -->
+      <div class="detail-card" style="margin-bottom:1.5rem;">
+        <div class="card-title" style="margin-bottom:1rem;">ReACT 패턴 동작 과정</div>
+        <div class="react-chain" id="react-chain">
+          <div class="react-step" data-type="thought">
+            <div class="react-label">Thought</div>
+            <div class="react-content">"에이전트들의 영향력 패턴을 파악하기 위해 전체 행동 데이터를 분석해야 한다."</div>
+          </div>
+          <div class="react-step" data-type="action">
+            <div class="react-label">Action</div>
+            <div class="react-content"><strong>InsightForge</strong> 도구 호출 → 가장 영향력 있는 에이전트 TOP 10, 행동 클러스터, 협력 패턴 분석</div>
+          </div>
+          <div class="react-step" data-type="observation">
+            <div class="react-label">Observe</div>
+            <div class="react-content">Agent_42(@kim_reporter)가 가장 높은 영향력 점수. 3개의 뚜렷한 의견 그룹 확인. 2개 그룹 간 교차 상호작용 발견.</div>
+          </div>
+          <div class="react-step" data-type="thought">
+            <div class="react-label">Thought</div>
+            <div class="react-content">"플랫폼별 차이를 확인하고 전체 트렌드를 파악해야 한다."</div>
+          </div>
+          <div class="react-step" data-type="action">
+            <div class="react-label">Action</div>
+            <div class="react-content"><strong>Panorama</strong> 도구 호출 → 플랫폼별 활동 분포, 토픽 트렌드, Twitter vs Reddit 비교 통계</div>
+          </div>
+          <div class="react-step" data-type="observation">
+            <div class="react-label">Observe</div>
+            <div class="react-content">Twitter에서 정보 확산이 3배 빠르지만, Reddit에서 깊이 있는 토론이 2.5배 더 많음. 핵심 토픽 5개 추출.</div>
+          </div>
+          <div class="react-step" data-type="action">
+            <div class="react-label">Action</div>
+            <div class="react-content"><strong>Interview</strong> 도구 호출 → Agent_42에게 "왜 이 주제에 집중했나요?" 질의</div>
+          </div>
+          <div class="react-step" data-type="observation">
+            <div class="react-label">Observe</div>
+            <div class="react-content">"기자로서 공공 이익에 영향을 미치는 주제에 집중합니다. 동료 기자들의 반응을 보고 이 이슈가 중요하다고 판단했습니다."</div>
+          </div>
+          <div class="react-step" data-type="reflection">
+            <div class="react-label">Reflect</div>
+            <div class="react-content">미디어 종사자 그룹이 여론 형성에 핵심 역할. Twitter가 속보 확산, Reddit이 심층 논의 채널로 기능. 이 패턴은 실제 소셜 미디어 생태계와 유사한 구조를 보임.</div>
+          </div>
+        </div>
+        <button onclick="animateReact()" style="margin-top:1rem; background:var(--step4); color:#000; border:none; padding:0.5rem 1.2rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">
+          ▶ ReACT 과정 재생
+        </button>
+      </div>
+
+      <!-- Tools grid -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+        <div class="detail-card" style="border-top: 3px solid var(--step1);">
+          <div class="card-icon">🔬</div>
+          <div class="card-title">InsightForge</div>
+          <div class="card-desc">
+            에이전트 행동 패턴 분석 도구<br><br>
+            • 영향력 순위<br>
+            • 행동 클러스터 감지<br>
+            • 협력/갈등 패턴<br>
+            • 의사결정 동인 분석
+          </div>
+        </div>
+        <div class="detail-card" style="border-top: 3px solid var(--step2);">
+          <div class="card-icon">🌍</div>
+          <div class="card-title">Panorama</div>
+          <div class="card-desc">
+            플랫폼 레벨 통계 도구<br><br>
+            • 활동 분포 차트<br>
+            • 토픽 트렌드 추이<br>
+            • 플랫폼 간 비교<br>
+            • 시간대별 활동 패턴
+          </div>
+        </div>
+        <div class="detail-card" style="border-top: 3px solid var(--step3);">
+          <div class="card-icon">🎙️</div>
+          <div class="card-title">Interview</div>
+          <div class="card-desc">
+            에이전트 직접 인터뷰 도구<br><br>
+            • 행동 동기 질의<br>
+            • 의사결정 과정 탐색<br>
+            • 다른 에이전트에 대한 인식<br>
+            • 시뮬레이션 경험 청취
+          </div>
+        </div>
+      </div>
+
+      <!-- Report sections -->
+      <div class="detail-card" style="margin-top:1.5rem;">
+        <div class="card-title">생성되는 보고서 구조</div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top:0.8rem;">
+          <div style="background:var(--bg); padding:0.6rem; border-radius:8px; font-size:0.8rem; text-align:center;">📋 Executive Summary</div>
+          <div style="background:var(--bg); padding:0.6rem; border-radius:8px; font-size:0.8rem; text-align:center;">📱 플랫폼 역학</div>
+          <div style="background:var(--bg); padding:0.6rem; border-radius:8px; font-size:0.8rem; text-align:center;">👥 에이전트 행동 분석</div>
+          <div style="background:var(--bg); padding:0.6rem; border-radius:8px; font-size:0.8rem; text-align:center;">📈 트렌드 진화</div>
+          <div style="background:var(--bg); padding:0.6rem; border-radius:8px; font-size:0.8rem; text-align:center;">🔮 예측 & 시사점</div>
+          <div style="background:var(--bg); padding:0.6rem; border-radius:8px; font-size:0.8rem; text-align:center;">💡 권고사항</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──── STEP 5 ──── -->
+  <div class="step-section" data-step="5" id="step-5">
+    <div class="step-header" onclick="toggleStep(5)">
+      <div class="step-num">5</div>
+      <div class="step-info">
+        <h2>심층 인터랙션 <span class="eng">Deep Interaction</span></h2>
+        <p>시뮬레이션 세계의 에이전트와 대화하고, 보고서를 확장합니다</p>
+      </div>
+      <span class="toggle-icon">▼</span>
+    </div>
+
+    <div class="step-body" id="step-body-5">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Agent Chat Demo -->
+        <div class="chat-container">
+          <div class="chat-header">
+            <span>🎙️</span> 에이전트 인터뷰 — @kim_reporter
+          </div>
+          <div class="chat-body" id="agent-chat">
+            <div class="chat-msg user">
+              <div class="chat-sender">사용자</div>
+              <div class="chat-bubble">시뮬레이션에서 가장 기억에 남는 상호작용은 무엇이었나요?</div>
+            </div>
+            <div class="chat-msg agent">
+              <div class="chat-sender">@kim_reporter (Agent_42)</div>
+              <div class="chat-bubble">5라운드에서 제가 올린 AI 규제 관련 트윗이 예상치 못한 반향을 일으켰습니다. 정부 관계자 에이전트가 리트윗하면서 논의가 빠르게 확산되었고, Reddit에서도 깊이 있는 토론으로 이어졌습니다. 이 경험은 미디어의 의제 설정 능력을 재확인하게 해주었습니다.</div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-sender">사용자</div>
+              <div class="chat-bubble">다른 에이전트들의 반응 중 놀라웠던 것은?</div>
+            </div>
+            <div class="chat-msg agent">
+              <div class="chat-sender">@kim_reporter (Agent_42)</div>
+              <div class="chat-bubble">시민단체 에이전트(@civic_watch)가 제 기사에 대해 독자적인 데이터 분석으로 보완 코멘트를 달았는데, 이것이 새로운 논의 축을 만들었습니다. 전문가 그룹과 시민 그룹이 자연스럽게 연대하는 패턴은 흥미로웠습니다.</div>
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input class="chat-input" placeholder="에이전트에게 질문하세요..." id="agent-input" onkeypress="if(event.key==='Enter')sendAgentChat()">
+            <button class="chat-send" onclick="sendAgentChat()">전송</button>
+          </div>
+        </div>
+
+        <!-- Report Agent Chat Demo -->
+        <div class="chat-container">
+          <div class="chat-header">
+            <span>📊</span> ReportAgent 대화
+          </div>
+          <div class="chat-body" id="report-chat">
+            <div class="chat-msg user">
+              <div class="chat-sender">사용자</div>
+              <div class="chat-bubble">만약 미디어 에이전트를 시뮬레이션에서 제거하면 어떤 변화가 생겼을까요?</div>
+            </div>
+            <div class="chat-msg agent">
+              <div class="chat-sender">ReportAgent</div>
+              <div class="chat-bubble">흥미로운 질문입니다. InsightForge로 미디어 에이전트의 영향도를 분석한 결과, 미디어 그룹은 전체 정보 확산의 43%를 담당하고 있었습니다.<br><br>미디어 에이전트 제거 시 예상 시나리오:<br>1. 정보 확산 속도 60% 감소<br>2. 논의 주제의 다양성 35% 감소<br>3. 플랫폼 간 교차 활동 70% 감소<br><br>결국 에코 챔버 현상이 강화되어 각 그룹이 자체 내러티브에만 집중하게 될 것으로 보입니다.</div>
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input class="chat-input" placeholder="보고서에 대해 질문하세요..." id="report-input" onkeypress="if(event.key==='Enter')sendReportChat()">
+            <button class="chat-send" onclick="sendReportChat()">전송</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top:1.5rem;">
+        <div class="detail-card">
+          <div class="card-icon">💬</div>
+          <div class="card-title">에이전트 인터뷰</div>
+          <div class="card-desc">시뮬레이션을 경험한 에이전트에게 직접 질문할 수 있습니다. 에이전트는 자신의 설정과 시뮬레이션 기억을 바탕으로 답변합니다.</div>
+        </div>
+        <div class="detail-card">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">보고서 확장</div>
+          <div class="card-desc">ReportAgent에게 추가 질문을 하면 도구를 활용해 새로운 분석을 수행하고, 보고서에 새 섹션을 동적으로 추가합니다.</div>
+        </div>
+        <div class="detail-card">
+          <div class="card-icon">📥</div>
+          <div class="card-title">PDF 내보내기</div>
+          <div class="card-desc">완성된 보고서를 PDF로 다운로드할 수 있습니다. 모든 분석 결과, 시각화, 에이전트 인사이트가 포함됩니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──── Architecture Summary ──── -->
+  <div class="step-section" data-step="0" id="arch-section" style="margin-top:4rem;">
+    <h2 class="section-title">기술 아키텍처</h2>
+    <p class="section-desc" style="margin-bottom:2rem;">MiroFish의 3계층 아키텍처</p>
+
+    <div class="architecture-grid">
+      <div class="arch-layer">
+        <h4>🎨 Frontend</h4>
+        <div class="arch-items">
+          <div class="arch-item">Vue 3.5 + Composition API</div>
+          <div class="arch-item">Vite 7 (HMR)</div>
+          <div class="arch-item">D3.js 7 (그래프 시각화)</div>
+          <div class="arch-item">Vue Router 4</div>
+          <div class="arch-item">Axios (API 통신)</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <h4>⚙️ Backend</h4>
+        <div class="arch-items">
+          <div class="arch-item">Flask 3 (REST API)</div>
+          <div class="arch-item">OpenAI SDK (LLM)</div>
+          <div class="arch-item">CAMEL-OASIS 0.2.5</div>
+          <div class="arch-item">19개 서비스 모듈</div>
+          <div class="arch-item">Background Threading</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <h4>💾 Data</h4>
+        <div class="arch-items">
+          <div class="arch-item">Neo4j 5 (지식 그래프)</div>
+          <div class="arch-item">ChromaDB (벡터 검색)</div>
+          <div class="arch-item">JSONL (액션 로그)</div>
+          <div class="arch-item">CSV / JSON (프로필)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  MiroFish Pipeline Guide — 다중 에이전트 기반 군중 지능 예측 엔진
+</footer>
+
+<script>
+// ── Scroll animation ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.step-section').forEach(s => observer.observe(s));
+
+// ── Toggle steps ──
+function toggleStep(n) {
+  const body = document.getElementById(`step-body-${n}`);
+  const header = body.previousElementSibling;
+  body.classList.toggle('open');
+  header.classList.toggle('active');
+}
+
+function scrollToStep(n) {
+  const el = document.getElementById(`step-${n}`);
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => {
+    const body = document.getElementById(`step-body-${n}`);
+    if (!body.classList.contains('open')) toggleStep(n);
+    el.classList.add('highlight');
+    setTimeout(() => el.classList.remove('highlight'), 1500);
+  }, 500);
+}
+
+// ── Simulation Demo ──
+const twitterPosts = [
+  { author: '@kim_reporter', content: 'AI 규제 법안이 국회에 상정되었습니다. 주요 쟁점을 정리했습니다. #AI규제 #기술정책', likes: '234', rt: '89' },
+  { author: '@gov_official', content: 'RT @kim_reporter 공정한 AI 활용을 위한 가이드라인을 마련 중입니다.', likes: '156', rt: '45' },
+  { author: '@tech_ceo', content: '규제보다 산업 자율 규범이 효과적입니다. 과도한 규제는 혁신을 저해할 수 있습니다.', likes: '312', rt: '67' },
+  { author: '@civic_watch', content: '시민 데이터로 분석한 결과, AI 편향 사례가 지난 분기 대비 23% 증가했습니다.', likes: '189', rt: '102' },
+  { author: '@researcher_lee', content: '유럽 AI Act와 비교했을 때, 이번 법안은 더 유연한 접근을 취하고 있네요.', likes: '97', rt: '34' },
+];
+
+const redditPosts = [
+  { author: 'u/tech_policy_wonk', content: '[분석] AI 규제 법안의 핵심 조항 5가지 해설', votes: '↑ 423', comments: '87 댓글' },
+  { author: 'u/startup_founder', content: '스타트업 입장에서 이번 규제안을 보면... 규제 비용이 매출의 15%에 달할 수 있습니다', votes: '↑ 256', comments: '134 댓글' },
+  { author: 'u/ai_ethicist', content: '알고리즘 감사 의무화는 필수입니다. 최근 사례들을 봐도...', votes: '↑ 178', comments: '56 댓글' },
+  { author: 'u/data_engineer', content: '기술적으로 AI 모델의 "설명가능성"을 어떻게 강제할 수 있을까요?', votes: '↑ 312', comments: '98 댓글' },
+  { author: 'u/policy_researcher', content: '각국 AI 규제 비교 테이블을 만들었습니다 [링크]', votes: '↑ 567', comments: '45 댓글' },
+];
+
+let simTimer = null;
+
+function runSimDemo() {
+  if (simTimer) { clearInterval(simTimer); simTimer = null; }
+  document.getElementById('twitter-feed').innerHTML = '';
+  document.getElementById('reddit-feed').innerHTML = '';
+
+  let round = 0;
+  let tIdx = 0, rIdx = 0;
+
+  simTimer = setInterval(() => {
+    round++;
+    document.getElementById('sim-round').textContent = `라운드: ${round} / 30`;
+
+    if (round % 2 === 0 && tIdx < twitterPosts.length) {
+      const p = twitterPosts[tIdx++];
+      const feed = document.getElementById('twitter-feed');
+      const div = document.createElement('div');
+      div.className = 'sim-post';
+      div.style.animationDelay = '0s';
+      div.innerHTML = `<div class="author">${p.author}</div><div class="content">${p.content}</div><div class="metrics"><span>❤️ ${p.likes}</span><span>🔄 ${p.rt}</span></div>`;
+      feed.prepend(div);
+    }
+
+    if (round % 3 === 0 && rIdx < redditPosts.length) {
+      const p = redditPosts[rIdx++];
+      const feed = document.getElementById('reddit-feed');
+      const div = document.createElement('div');
+      div.className = 'sim-post';
+      div.style.animationDelay = '0s';
+      div.innerHTML = `<div class="author">${p.author}</div><div class="content">${p.content}</div><div class="metrics"><span>${p.votes}</span><span>💬 ${p.comments}</span></div>`;
+      feed.prepend(div);
+    }
+
+    if (round >= 30) {
+      clearInterval(simTimer);
+      simTimer = null;
+    }
+  }, 400);
+}
+
+// ── ReACT animation ──
+function animateReact() {
+  const steps = document.querySelectorAll('#react-chain .react-step');
+  steps.forEach(s => s.classList.remove('visible'));
+
+  steps.forEach((s, i) => {
+    setTimeout(() => s.classList.add('visible'), i * 600);
+  });
+}
+
+// Initial trigger
+setTimeout(() => animateReact(), 1000);
+
+// ── Chat demos ──
+const agentResponses = [
+  "시뮬레이션 15라운드에서 정보 확산이 절정에 달했을 때, 저는 팩트체크 역할을 자처했습니다. 기자로서의 책임감이 행동을 이끌었습니다.",
+  "흥미롭게도, Reddit의 깊이 있는 분석 글이 제 Twitter 포스팅에 영향을 주었습니다. 크로스 플랫폼 정보 흐름을 직접 체험한 셈이죠.",
+  "마지막 라운드에서는 대부분의 에이전트가 하나의 합의점으로 수렴하는 현상을 관찰했습니다. 이것은 시뮬레이션의 가장 흥미로운 결과였습니다.",
+];
+
+const reportResponses = [
+  "Panorama 분석 결과, 시뮬레이션의 정보 확산 패턴은 실제 소셜 미디어의 '정보 캐스케이드' 모델과 85% 유사도를 보입니다.",
+  "InsightForge에 따르면, 핵심 영향자 5명이 전체 담론의 방향을 결정하는 '허브 앤 스포크' 구조가 나타났습니다. 이는 바라바시-알버트 모델의 예측과 일치합니다.",
+  "추가 분석을 수행했습니다. 시간대별 활동 패턴을 보면, 오전 9-11시에 정보 생산이 집중되고 오후 3-5시에 토론이 활발해지는 주기가 관찰됩니다.",
+];
+
+let agentRespIdx = 0, reportRespIdx = 0;
+
+function sendAgentChat() {
+  const input = document.getElementById('agent-input');
+  if (!input.value.trim()) return;
+
+  const chatBody = document.getElementById('agent-chat');
+  chatBody.innerHTML += `<div class="chat-msg user"><div class="chat-sender">사용자</div><div class="chat-bubble">${input.value}</div></div>`;
+
+  const resp = agentResponses[agentRespIdx % agentResponses.length];
+  agentRespIdx++;
+
+  setTimeout(() => {
+    chatBody.innerHTML += `<div class="chat-msg agent"><div class="chat-sender">@kim_reporter (Agent_42)</div><div class="chat-bubble">${resp}</div></div>`;
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }, 800);
+
+  input.value = '';
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function sendReportChat() {
+  const input = document.getElementById('report-input');
+  if (!input.value.trim()) return;
+
+  const chatBody = document.getElementById('report-chat');
+  chatBody.innerHTML += `<div class="chat-msg user"><div class="chat-sender">사용자</div><div class="chat-bubble">${input.value}</div></div>`;
+
+  const resp = reportResponses[reportRespIdx % reportResponses.length];
+  reportRespIdx++;
+
+  setTimeout(() => {
+    chatBody.innerHTML += `<div class="chat-msg agent"><div class="chat-sender">ReportAgent</div><div class="chat-bubble">${resp}</div></div>`;
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }, 1000);
+
+  input.value = '';
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// ── Auto-open first step on load ──
+window.addEventListener('load', () => {
+  setTimeout(() => toggleStep(1), 800);
+});
+</script>
+</body>
+</html>

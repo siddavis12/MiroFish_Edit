@@ -4,12 +4,29 @@
     <div class="main-split-layout">
       <!-- LEFT PANEL: Report Style -->
       <div class="left-panel report-style" ref="leftPanel">
-        <div v-if="reportOutline" class="report-content-wrapper">
+        <div v-if="reportOutline" class="report-content-wrapper" ref="reportContentRef">
           <!-- Report Header -->
           <div class="report-header-block">
             <div class="report-meta">
               <span class="report-tag">Prediction Report</span>
               <span class="report-id">ID: {{ reportId || 'REF-2024-X92' }}</span>
+              <button
+                class="pdf-download-btn"
+                :class="{ 'is-loading': isPdfLoading }"
+                :disabled="isPdfLoading"
+                @click="downloadPdf"
+                title="PDF로 다운로드"
+              >
+                <svg v-if="!isPdfLoading" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <svg v-else class="spin-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                </svg>
+                <span>{{ isPdfLoading ? 'PDF 생성 중...' : 'PDF 저장' }}</span>
+              </button>
             </div>
             <h1 class="main-title">{{ reportOutline.title }}</h1>
             <p class="sub-title">{{ reportOutline.summary }}</p>
@@ -414,6 +431,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { chatWithReport, getReport, getAgentLog } from '../api/report'
 import { interviewAgents, getSimulationProfilesRealtime } from '../api/simulation'
+import html2pdf from 'html2pdf.js'
 
 const props = defineProps({
   reportId: String,
@@ -460,10 +478,43 @@ const isSectionCompleted = (sectionIndex) => {
 // Refs
 const leftPanel = ref(null)
 const rightPanel = ref(null)
+const reportContentRef = ref(null)
+
+// PDF State
+const isPdfLoading = ref(false)
 
 // Methods
 const addLog = (msg) => {
   emit('add-log', msg)
+}
+
+const downloadPdf = async () => {
+  if (!reportContentRef.value || isPdfLoading.value) return
+  isPdfLoading.value = true
+  try {
+    const title = reportOutline.value?.title || 'report'
+    const filename = `${title.replace(/[\\/:*?"<>|]/g, '_').substring(0, 60)}.pdf`
+
+    // 섹션을 모두 펼쳐서 렌더링
+    const prevCollapsed = new Set(collapsedSections.value)
+    collapsedSections.value = new Set()
+    await nextTick()
+
+    const opt = {
+      margin: [15, 15, 15, 15],
+      filename,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    }
+
+    await html2pdf().set(opt).from(reportContentRef.value).save()
+
+    // 원래 접힘 상태 복원
+    collapsedSections.value = prevCollapsed
+  } finally {
+    isPdfLoading.value = false
+  }
 }
 
 const toggleSectionCollapse = (idx) => {
@@ -1030,6 +1081,42 @@ watch(() => props.simulationId, (newId) => {
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.pdf-download-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  background: #FFFFFF;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.pdf-download-btn:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+}
+
+.pdf-download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pdf-download-btn .spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .report-tag {

@@ -99,6 +99,10 @@ MiroFish의 온톨로지 생성기는 시뮬레이션 요구사항을 받아서:
 
 [Scenarios]
 — 예상되는 2~3가지 전개 방향
+
+[Output Language Requirement]
+— 반드시 아래 문장을 브리프 마지막에 포함:
+"IMPORTANT: All simulation outputs—including agent posts, comments, report analysis, and interaction summaries—must be written in Korean (한국어)."
 ```
 
 ### Phase 4: 검토 및 개선

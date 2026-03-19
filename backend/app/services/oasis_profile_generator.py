@@ -15,6 +15,24 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
+
+def _normalize_topics(value) -> list:
+    """LLM이 문자열로 반환한 토픽 배열을 list로 정규화"""
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        v = value.strip()
+        try:
+            parsed = json.loads(v)
+            if isinstance(parsed, list):
+                return parsed
+        except Exception:
+            pass
+        # 대괄호 제거 후 쉼표 분리 (e.g. "[a, b, c]" → ["a", "b", "c"])
+        v = v.strip("[]")
+        return [t.strip().strip('"\'') for t in v.split(",") if t.strip()]
+    return []
+
 from ..config import Config
 from ..utils.llm_client import LLMClient
 from ..utils.logger import get_logger
@@ -252,7 +270,7 @@ class OasisProfileGenerator:
             mbti=profile_data.get("mbti"),
             country=profile_data.get("country"),
             profession=profile_data.get("profession"),
-            interested_topics=profile_data.get("interested_topics", []),
+            interested_topics=_normalize_topics(profile_data.get("interested_topics", [])),
             source_entity_uuid=entity.uuid,
             source_entity_type=entity_type,
         )
