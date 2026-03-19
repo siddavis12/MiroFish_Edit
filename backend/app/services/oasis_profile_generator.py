@@ -72,6 +72,10 @@ class OasisAgentProfile:
     # 출처 엔티티 정보
     source_entity_uuid: Optional[str] = None
     source_entity_type: Optional[str] = None
+
+    # 입장/감정 정합성 (시뮬레이션 설정과 공유)
+    stance: Optional[str] = None           # supportive, opposing, neutral, observer
+    sentiment_bias: Optional[float] = None  # -1.0 ~ 1.0
     
     created_at: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
     
@@ -102,6 +106,10 @@ class OasisAgentProfile:
             profile["interested_topics"] = self.interested_topics
         if self.source_entity_type:
             profile["entity_type"] = self.source_entity_type
+        if self.stance:
+            profile["stance"] = self.stance
+        if self.sentiment_bias is not None:
+            profile["sentiment_bias"] = self.sentiment_bias
 
         return profile
 
@@ -132,9 +140,13 @@ class OasisAgentProfile:
             profile["profession"] = self.profession
         if self.interested_topics:
             profile["interested_topics"] = self.interested_topics
-        
+        if self.stance:
+            profile["stance"] = self.stance
+        if self.sentiment_bias is not None:
+            profile["sentiment_bias"] = self.sentiment_bias
+
         return profile
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """전체 딕셔너리 형식으로 변환"""
         return {
@@ -155,6 +167,8 @@ class OasisAgentProfile:
             "interested_topics": self.interested_topics,
             "source_entity_uuid": self.source_entity_uuid,
             "source_entity_type": self.source_entity_type,
+            "stance": self.stance,
+            "sentiment_bias": self.sentiment_bias,
             "created_at": self.created_at,
         }
 
@@ -179,11 +193,14 @@ class OasisProfileGenerator:
         "ISTP", "ISFP", "ESTP", "ESFP"
     ]
     
-    # 일반적인 국가 목록
+    # 일반적인 국가 목록 (한국어)
     COUNTRIES = [
-        "China", "US", "UK", "Japan", "Germany", "France", 
-        "Canada", "Australia", "Brazil", "India", "South Korea"
+        "중국", "미국", "영국", "일본", "독일", "프랑스",
+        "캐나다", "호주", "브라질", "인도", "한국"
     ]
+
+    # 기관 적합 MBTI 유형 (다양성 확보)
+    INSTITUTION_MBTI_TYPES = ["ISTJ", "ESTJ", "ENTJ", "INTJ", "ENFJ", "INFJ"]
     
     # 개인 유형 엔티티 (구체적인 페르소나 생성 필요)
     INDIVIDUAL_ENTITY_TYPES = [
@@ -273,6 +290,8 @@ class OasisProfileGenerator:
             interested_topics=_normalize_topics(profile_data.get("interested_topics", [])),
             source_entity_uuid=entity.uuid,
             source_entity_type=entity_type,
+            stance=profile_data.get("stance"),
+            sentiment_bias=profile_data.get("sentiment_bias"),
         )
     
     def _generate_username(self, name: str) -> str:
@@ -486,6 +505,17 @@ class OasisProfileGenerator:
         """그룹/기관 유형 엔티티인지 판단"""
         return entity_type.lower() in self.GROUP_ENTITY_TYPES
     
+    def _extract_country_hint(self, entity_attributes: Dict[str, Any]) -> Optional[str]:
+        """엔티티 속성에서 국가/지역 힌트 추출"""
+        country_keys = ["country", "국가", "headquarters", "본사", "location", "소재지", "region", "지역"]
+        if not entity_attributes:
+            return None
+        for key in country_keys:
+            for attr_key, attr_value in entity_attributes.items():
+                if key in attr_key.lower() and attr_value:
+                    return str(attr_value).strip()
+        return None
+
     def _generate_profile_with_llm(
         self,
         entity_name: str,
@@ -496,21 +526,26 @@ class OasisProfileGenerator:
     ) -> Dict[str, Any]:
         """
         LLM을 사용하여 매우 상세한 페르소나 생성
-        
+
         엔티티 유형에 따라 구분:
         - 개인 엔티티: 구체적인 인물 설정 생성
         - 그룹/기관 엔티티: 대표 계정 설정 생성
         """
-        
+
         is_individual = self._is_individual_entity(entity_type)
-        
+
+        # 엔티티 속성에서 국가 힌트 추출
+        country_hint = self._extract_country_hint(entity_attributes)
+
         if is_individual:
             prompt = self._build_individual_persona_prompt(
-                entity_name, entity_type, entity_summary, entity_attributes, context
+                entity_name, entity_type, entity_summary, entity_attributes, context,
+                country_hint=country_hint
             )
         else:
             prompt = self._build_group_persona_prompt(
-                entity_name, entity_type, entity_summary, entity_attributes, context
+                entity_name, entity_type, entity_summary, entity_attributes, context,
+                country_hint=country_hint
             )
 
         # LLMClient의 chat_with_retry를 사용하여 재시도 + reasoning 모델 자동 지원
@@ -651,7 +686,7 @@ class OasisProfileGenerator:
     
     def _get_system_prompt(self, is_individual: bool) -> str:
         """시스템 프롬프트 가져오기"""
-        base_prompt = "당신은 소셜 미디어 사용자 프로필 생성 전문가입니다. 여론 시뮬레이션용 상세하고 현실적인 페르소나를 생성하며, 기존 현실 상황을 최대한 재현합니다. 유효한 JSON 형식을 반환해야 하며, 모든 문자열 값에 이스케이프되지 않은 줄바꿈을 포함할 수 없습니다. 한국어를 사용하세요."
+        base_prompt = "당신은 소셜 미디어 사용자 프로필 생성 전문가입니다. 여론 시뮬레이션용 상세하고 현실적인 페르소나를 생성하며, 기존 현실 상황을 최대한 재현합니다. 유효한 JSON 형식을 반환해야 하며, 모든 문자열 값에 이스케이프되지 않은 줄바꿈을 포함할 수 없습니다. 한국어를 사용하세요. stance와 sentiment_bias는 persona 텍스트의 입장/태도와 반드시 일관성을 유지하세요. 비판적 톤이면 stance는 'opposing', sentiment_bias는 음수여야 합니다. 지지적 톤이면 stance는 'supportive', sentiment_bias는 양수여야 합니다."
         return base_prompt
     
     def _build_individual_persona_prompt(
@@ -660,19 +695,25 @@ class OasisProfileGenerator:
         entity_type: str,
         entity_summary: str,
         entity_attributes: Dict[str, Any],
-        context: str
+        context: str,
+        country_hint: Optional[str] = None
     ) -> str:
         """개인 엔티티의 상세 페르소나 프롬프트 구성"""
-        
+
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "없음"
         context_str = context[:3000] if context else "추가 컨텍스트 없음"
-        
+
+        # 국가 힌트가 있으면 프롬프트에 명시
+        country_hint_str = ""
+        if country_hint:
+            country_hint_str = f"\n참고: 이 엔티티의 소재 국가 힌트: {country_hint}"
+
         return f"""엔티티에 대한 상세한 소셜 미디어 사용자 페르소나를 생성하며, 기존 현실 상황을 최대한 재현합니다.
 
 엔티티 이름: {entity_name}
 엔티티 유형: {entity_type}
 엔티티 요약: {entity_summary}
-엔티티 속성: {attrs_str}
+엔티티 속성: {attrs_str}{country_hint_str}
 
 컨텍스트 정보:
 {context_str}
@@ -690,10 +731,12 @@ class OasisProfileGenerator:
    - 개인 기억 (페르소나의 중요 부분, 이 개인과 사건의 연관, 그리고 사건에서의 기존 행동과 반응 소개)
 3. age: 나이 숫자 (반드시 정수)
 4. gender: 성별, 반드시 영어: "male" 또는 "female"
-5. mbti: MBTI 유형 (예: INTJ, ENFP 등)
-6. country: 국가 (한국어 사용, 예: "한국")
+5. mbti: MBTI 유형 (16가지 중 엔티티의 성격/행동 패턴에 가장 부합하는 유형 선택. 다양한 유형을 고려하세요)
+6. country: 국가 (한국어로 작성). 엔티티 속성에 headquarters, location, country, 소재지 등의 정보가 있으면 반드시 그 정보를 기반으로 국가를 결정하세요. 실제 존재하는 엔티티라면 실제 본사/본거지 소재 국가를 사용하세요.
 7. profession: 직업
 8. interested_topics: 관심 주제 배열
+9. stance: 시뮬레이션 주제에 대한 입장. "supportive"/"opposing"/"neutral"/"observer" 중 하나. persona 텍스트의 입장/관점과 반드시 일치.
+10. sentiment_bias: 감정 성향 (-1.0~1.0). persona의 톤/태도와 반드시 일치. 비판적이면 음수, 지지적이면 양수, 중립이면 0 근처.
 
 중요:
 - 모든 필드 값은 문자열 또는 숫자여야 하며, 줄바꿈을 사용하지 마세요
@@ -701,6 +744,7 @@ class OasisProfileGenerator:
 - 한국어를 사용하세요 (gender 필드는 반드시 영어 male/female)
 - 내용은 엔티티 정보와 일관성을 유지해야 합니다
 - age는 유효한 정수, gender는 "male" 또는 "female"이어야 합니다
+- stance와 sentiment_bias는 persona 텍스트의 입장/태도와 반드시 정합성을 유지해야 합니다
 """
 
     def _build_group_persona_prompt(
@@ -709,19 +753,25 @@ class OasisProfileGenerator:
         entity_type: str,
         entity_summary: str,
         entity_attributes: Dict[str, Any],
-        context: str
+        context: str,
+        country_hint: Optional[str] = None
     ) -> str:
         """그룹/기관 엔티티의 상세 페르소나 프롬프트 구성"""
-        
+
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "없음"
         context_str = context[:3000] if context else "추가 컨텍스트 없음"
-        
+
+        # 국가 힌트가 있으면 프롬프트에 명시
+        country_hint_str = ""
+        if country_hint:
+            country_hint_str = f"\n참고: 이 엔티티의 소재 국가 힌트: {country_hint}"
+
         return f"""기관/그룹 엔티티에 대한 상세한 소셜 미디어 계정 설정을 생성하며, 기존 현실 상황을 최대한 재현합니다.
 
 엔티티 이름: {entity_name}
 엔티티 유형: {entity_type}
 엔티티 요약: {entity_summary}
-엔티티 속성: {attrs_str}
+엔티티 속성: {attrs_str}{country_hint_str}
 
 컨텍스트 정보:
 {context_str}
@@ -739,17 +789,20 @@ class OasisProfileGenerator:
    - 기관 기억 (기관 페르소나의 중요 부분, 이 기관과 사건의 연관, 그리고 사건에서의 기존 행동과 반응 소개)
 3. age: 고정값 30 (기관 계정의 가상 나이)
 4. gender: 고정값 "other" (기관 계정은 other로 비개인 표시)
-5. mbti: MBTI 유형, 계정 스타일 설명용, 예: ISTJ는 엄격하고 보수적
-6. country: 국가 (한국어 사용, 예: "한국")
+5. mbti: MBTI 유형, 계정의 커뮤니케이션 스타일을 반영 (예: ENTJ=리더십, ENFJ=소통중심, ISTJ=원칙적, ESTP=행동지향 등)
+6. country: 국가 (한국어로 작성). 엔티티 속성에 headquarters, location, country, 소재지 등의 정보가 있으면 반드시 그 정보를 기반으로 국가를 결정하세요. 실제 존재하는 기관이라면 실제 본사/본부 소재 국가를 사용하세요.
 7. profession: 기관 기능 설명
 8. interested_topics: 관심 분야 배열
+9. stance: 시뮬레이션 주제에 대한 입장. "supportive"/"opposing"/"neutral"/"observer" 중 하나. persona 텍스트의 입장/관점과 반드시 일치.
+10. sentiment_bias: 감정 성향 (-1.0~1.0). persona의 톤/태도와 반드시 일치.
 
 중요:
 - 모든 필드 값은 문자열 또는 숫자여야 하며, null 값은 허용되지 않음
 - persona는 하나의 연결된 텍스트 설명이어야 합니다, 줄바꿈을 사용하지 마세요
 - 한국어를 사용하세요 (gender 필드는 반드시 영어 "other")
 - age는 반드시 정수 30, gender는 반드시 문자열 "other"
-- 기관 계정 발언은 그 신원 포지셔닝에 부합해야 함"""
+- 기관 계정 발언은 그 신원 포지셔닝에 부합해야 함
+- stance와 sentiment_bias는 persona 텍스트의 입장/태도와 반드시 정합성을 유지해야 합니다"""
     
     # 개인(사람) 엔티티 유형 목록
     INDIVIDUAL_ENTITY_TYPES = {
@@ -770,10 +823,13 @@ class OasisProfileGenerator:
         entity_attributes: Dict[str, Any]
     ) -> Dict[str, Any]:
         """규칙 기반으로 기본 페르소나 생성"""
-        
+
+        # 엔티티 속성에서 국가 힌트 추출
+        country_hint = self._extract_country_hint(entity_attributes)
+
         # 엔티티 유형에 따라 다른 페르소나 생성
         entity_type_lower = entity_type.lower()
-        
+
         if entity_type_lower in ["student", "alumni"]:
             return {
                 "bio": f"학업과 사회 문제에 관심이 있는 {entity_name}.",
@@ -781,9 +837,11 @@ class OasisProfileGenerator:
                 "age": random.randint(18, 30),
                 "gender": random.choice(["male", "female"]),
                 "mbti": random.choice(self.MBTI_TYPES),
-                "country": random.choice(self.COUNTRIES),
+                "country": country_hint or random.choice(self.COUNTRIES),
                 "profession": "학생",
                 "interested_topics": ["교육", "사회 이슈", "기술"],
+                "stance": "neutral",
+                "sentiment_bias": round(random.uniform(-0.3, 0.3), 2),
             }
 
         elif entity_type_lower in ["publicfigure", "expert", "faculty"]:
@@ -792,34 +850,40 @@ class OasisProfileGenerator:
                 "persona": f"{entity_name}은(는) 중요한 사안에 대해 전문적인 견해와 통찰을 공유하는 인물입니다. 공론장에서의 전문성과 영향력으로 알려져 있습니다.",
                 "age": random.randint(35, 60),
                 "gender": random.choice(["male", "female"]),
-                "mbti": random.choice(["ENTJ", "INTJ", "ENTP", "INTP"]),
-                "country": random.choice(self.COUNTRIES),
+                "mbti": random.choice(self.MBTI_TYPES),
+                "country": country_hint or random.choice(self.COUNTRIES),
                 "profession": entity_attributes.get("occupation", "전문가"),
                 "interested_topics": ["정치", "경제", "문화와 사회"],
+                "stance": "neutral",
+                "sentiment_bias": 0.0,
             }
 
         elif entity_type_lower in ["mediaoutlet", "socialmediaplatform"]:
             return {
                 "bio": f"{entity_name}의 공식 계정. 뉴스 및 최신 소식 제공.",
                 "persona": f"{entity_name}은(는) 뉴스를 보도하고 공론을 촉진하는 미디어입니다. 시의적절한 소식을 전달하고 현안에 대해 독자와 소통합니다.",
-                "age": 30,  # 기관 가상 나이
-                "gender": "other",  # 기관은 other 사용
-                "mbti": "ISTJ",  # 기관 스타일: 엄격하고 보수적
-                "country": "한국",
+                "age": 30,
+                "gender": "other",
+                "mbti": random.choice(self.INSTITUTION_MBTI_TYPES),
+                "country": country_hint or random.choice(self.COUNTRIES),
                 "profession": "미디어",
                 "interested_topics": ["종합 뉴스", "시사", "공공 문제"],
+                "stance": "observer",
+                "sentiment_bias": 0.0,
             }
 
         elif entity_type_lower in ["university", "governmentagency", "ngo", "organization"]:
             return {
                 "bio": f"{entity_name}의 공식 계정.",
                 "persona": f"{entity_name}은(는) 공식 입장과 공지사항을 전달하고 이해관계자와 소통하는 기관입니다.",
-                "age": 30,  # 기관 가상 나이
-                "gender": "other",  # 기관은 other 사용
-                "mbti": "ISTJ",  # 기관 스타일: 엄격하고 보수적
-                "country": "한국",
+                "age": 30,
+                "gender": "other",
+                "mbti": random.choice(self.INSTITUTION_MBTI_TYPES),
+                "country": country_hint or random.choice(self.COUNTRIES),
                 "profession": entity_type,
                 "interested_topics": ["공공 정책", "커뮤니티", "공식 발표"],
+                "stance": "neutral",
+                "sentiment_bias": 0.0,
             }
 
         else:
@@ -831,9 +895,11 @@ class OasisProfileGenerator:
                     "age": random.randint(25, 50),
                     "gender": random.choice(["male", "female"]),
                     "mbti": random.choice(self.MBTI_TYPES),
-                    "country": random.choice(self.COUNTRIES),
+                    "country": country_hint or random.choice(self.COUNTRIES),
                     "profession": entity_type,
                     "interested_topics": ["일반", "사회 이슈"],
+                    "stance": "neutral",
+                    "sentiment_bias": 0.0,
                 }
             else:
                 # 비인간 엔티티 (기관/이벤트/국가 등)
@@ -842,10 +908,12 @@ class OasisProfileGenerator:
                     "persona": entity_summary or f"{entity_name}은(는) 공식 입장과 정보를 전달하는 기관/단체입니다.",
                     "age": 30,
                     "gender": "other",
-                    "mbti": "ISTJ",
-                    "country": "한국",
+                    "mbti": random.choice(self.INSTITUTION_MBTI_TYPES),
+                    "country": country_hint or random.choice(self.COUNTRIES),
                     "profession": entity_type,
                     "interested_topics": ["일반", "사회 이슈"],
+                    "stance": "neutral",
+                    "sentiment_bias": 0.0,
                 }
     
     def set_graph_id(self, graph_id: str):
@@ -1035,6 +1103,7 @@ class OasisProfileGenerator:
             f"【기본 속성】",
             f"나이: {profile.age} | 성별: {profile.gender} | MBTI: {profile.mbti}",
             f"직업: {profile.profession} | 국가: {profile.country}",
+            f"입장: {profile.stance or 'N/A'} | 감정 성향: {profile.sentiment_bias if profile.sentiment_bias is not None else 'N/A'}",
             f"관심 주제: {topics_str}",
             separator
         ]
@@ -1175,8 +1244,8 @@ class OasisProfileGenerator:
                 # OASIS 필수 필드 - 모두 기본값 보장
                 "age": profile.age if profile.age else 30,
                 "gender": self._normalize_gender(profile.gender),
-                "mbti": profile.mbti if profile.mbti else "ISTJ",
-                "country": profile.country if profile.country else "China",
+                "mbti": profile.mbti if profile.mbti else random.choice(["ISTJ", "ESTJ", "ENTJ", "INTJ"]),
+                "country": profile.country if profile.country else random.choice(self.COUNTRIES),
             }
             
             # 선택 필드
@@ -1186,6 +1255,10 @@ class OasisProfileGenerator:
                 item["interested_topics"] = profile.interested_topics
             if profile.source_entity_type:
                 item["entity_type"] = profile.source_entity_type
+            if profile.stance:
+                item["stance"] = profile.stance
+            if profile.sentiment_bias is not None:
+                item["sentiment_bias"] = profile.sentiment_bias
 
             data.append(item)
         
@@ -1194,6 +1267,195 @@ class OasisProfileGenerator:
         
         logger.info(f"{len(profiles)}개 Reddit Profile을 {file_path}에 저장 (JSON 형식, user_id 필드 포함)")
     
+    def verify_and_enhance_diversity(
+        self,
+        profiles: List[OasisAgentProfile],
+        similarity_threshold: float = 0.85,
+        max_regen_attempts: int = 2,
+        simulation_requirement: str = "",
+        entities: Optional[List] = None,
+    ) -> List[OasisAgentProfile]:
+        """
+        ChromaDB 임베딩(all-MiniLM-L6-v2)으로 코사인 유사도 계산 → 유사한 쌍 재생성
+
+        Args:
+            profiles: 생성된 프로필 목록
+            similarity_threshold: 유사도 임계값 (이 이상이면 재생성)
+            max_regen_attempts: 최대 재생성 시도 횟수
+            simulation_requirement: 시뮬레이션 요구사항
+            entities: 엔티티 목록 (재생성 시 컨텍스트용)
+
+        Returns:
+            다양성이 보장된 프로필 목록
+        """
+        import chromadb
+
+        if len(profiles) < 2:
+            return profiles
+
+        # 엔티티 UUID → 엔티티 매핑 구축
+        entity_map = {}
+        if entities:
+            for e in entities:
+                entity_map[e.uuid] = e
+
+        for attempt in range(max_regen_attempts):
+            # 임시 인메모리 ChromaDB 컬렉션 생성
+            client = chromadb.Client()
+            collection_name = f"diversity_check_{attempt}"
+            collection = client.create_collection(name=collection_name)
+
+            # 모든 persona 텍스트 임베딩
+            persona_texts = [p.persona or "" for p in profiles]
+            ids = [str(i) for i in range(len(profiles))]
+            collection.add(documents=persona_texts, ids=ids)
+
+            # 유사 쌍 식별
+            similar_pairs = []
+            for i, profile in enumerate(profiles):
+                results = collection.query(
+                    query_texts=[persona_texts[i]],
+                    n_results=2,  # self + 가장 유사한 것
+                )
+                if results and results["distances"] and results["distances"][0]:
+                    for j, (dist, rid) in enumerate(zip(results["distances"][0], results["ids"][0])):
+                        other_idx = int(rid)
+                        if other_idx != i:
+                            # ChromaDB 기본 거리는 L2; 코사인 유사도로 변환
+                            # cosine_similarity ≈ 1 - (l2_distance^2 / 2) for normalized vectors
+                            similarity = 1.0 - (dist / 2.0) if dist < 2.0 else 0.0
+                            if similarity > similarity_threshold:
+                                pair = tuple(sorted([i, other_idx]))
+                                if pair not in similar_pairs:
+                                    similar_pairs.append(pair)
+
+            # 임시 컬렉션 삭제
+            client.delete_collection(collection_name)
+
+            if not similar_pairs:
+                logger.info(f"다양성 검증 완료 (시도 {attempt + 1}): 유사 쌍 없음, 모든 프로필이 충분히 다양함")
+                return profiles
+
+            logger.info(f"다양성 검증 (시도 {attempt + 1}): {len(similar_pairs)}개 유사 쌍 발견, 재생성 시도")
+
+            # 쌍 중 컨텍스트가 적은 쪽을 재생성
+            regen_indices = set()
+            for i, j in similar_pairs:
+                # persona 길이가 짧은 쪽을 재생성 대상으로 선택
+                if len(profiles[i].persona or "") <= len(profiles[j].persona or ""):
+                    regen_indices.add(i)
+                else:
+                    regen_indices.add(j)
+
+            for idx in regen_indices:
+                profile = profiles[idx]
+                # 유사한 상대 프로필 찾기
+                similar_profile = None
+                for i, j in similar_pairs:
+                    other = j if i == idx else (i if j == idx else None)
+                    if other is not None:
+                        similar_profile = profiles[other]
+                        break
+
+                if similar_profile is None:
+                    continue
+
+                # 차별화 재생성
+                entity = entity_map.get(profile.source_entity_uuid)
+                if entity:
+                    new_profile = self._regenerate_with_differentiation(
+                        profile=profile,
+                        similar_profile=similar_profile,
+                        entity=entity,
+                        simulation_requirement=simulation_requirement,
+                    )
+                    if new_profile:
+                        profiles[idx] = new_profile
+                        logger.info(f"프로필 재생성 완료: {profile.name} (인덱스 {idx})")
+
+        logger.info(f"다양성 검증 및 보강 완료: {len(profiles)}개 프로필")
+        return profiles
+
+    def _regenerate_with_differentiation(
+        self,
+        profile: OasisAgentProfile,
+        similar_profile: OasisAgentProfile,
+        entity: 'EntityNode',
+        simulation_requirement: str = "",
+    ) -> Optional[OasisAgentProfile]:
+        """유사한 프로필과 차별화된 페르소나 재생성"""
+        entity_type = entity.get_entity_type() or "Entity"
+        is_individual = self._is_individual_entity(entity_type)
+        context = self._build_entity_context(entity)
+
+        differentiation_hint = f"""
+중요: 이미 시뮬레이션에 다음 페르소나가 존재합니다:
+---
+{similar_profile.persona[:500]}
+---
+당신의 페르소나는 위와 명확히 차별화되어야 합니다.
+고유한 경험, 다른 커뮤니케이션 스타일, 다른 감정 반응 패턴에 집중하세요.
+stance나 sentiment_bias도 가능하다면 다르게 설정하세요.
+"""
+
+        country_hint = self._extract_country_hint(entity.attributes)
+
+        if is_individual:
+            prompt = self._build_individual_persona_prompt(
+                entity.name, entity_type, entity.summary, entity.attributes, context,
+                country_hint=country_hint
+            )
+        else:
+            prompt = self._build_group_persona_prompt(
+                entity.name, entity_type, entity.summary, entity.attributes, context,
+                country_hint=country_hint
+            )
+
+        prompt = differentiation_hint + "\n" + prompt
+
+        messages = [
+            {"role": "system", "content": self._get_system_prompt(is_individual)},
+            {"role": "user", "content": prompt}
+        ]
+
+        try:
+            content, finish_reason = self.llm.chat_with_retry(
+                messages=messages,
+                temperature=0.9,  # 다양성을 위해 높은 temperature
+                response_format={"type": "json_object"}
+            )
+
+            if finish_reason == 'length':
+                content = self._fix_truncated_json(content)
+
+            profile_data = json.loads(content)
+
+            return OasisAgentProfile(
+                user_id=profile.user_id,
+                user_name=profile.user_name,
+                name=profile.name,
+                bio=profile_data.get("bio", profile.bio),
+                persona=profile_data.get("persona", profile.persona),
+                karma=profile_data.get("karma", profile.karma),
+                friend_count=profile_data.get("friend_count", profile.friend_count),
+                follower_count=profile_data.get("follower_count", profile.follower_count),
+                statuses_count=profile_data.get("statuses_count", profile.statuses_count),
+                age=profile_data.get("age", profile.age),
+                gender=profile_data.get("gender", profile.gender),
+                mbti=profile_data.get("mbti", profile.mbti),
+                country=profile_data.get("country", profile.country),
+                profession=profile_data.get("profession", profile.profession),
+                interested_topics=_normalize_topics(profile_data.get("interested_topics", profile.interested_topics)),
+                source_entity_uuid=profile.source_entity_uuid,
+                source_entity_type=profile.source_entity_type,
+                stance=profile_data.get("stance", profile.stance),
+                sentiment_bias=profile_data.get("sentiment_bias", profile.sentiment_bias),
+            )
+
+        except Exception as e:
+            logger.warning(f"차별화 재생성 실패 ({profile.name}): {e}")
+            return None
+
     # 이전 메서드 이름을 별칭으로 유지, 하위 호환성 보장
     def save_profiles_to_json(
         self,

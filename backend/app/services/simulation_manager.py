@@ -246,7 +246,8 @@ class SimulationManager:
         defined_entity_types: Optional[List[str]] = None,
         use_llm_for_profiles: bool = True,
         progress_callback: Optional[callable] = None,
-        parallel_profile_count: int = 3
+        parallel_profile_count: int = 3,
+        validate_personas: bool = False,
     ) -> SimulationState:
         """
         시뮬레이션 환경 준비 (전 과정 자동화)
@@ -266,6 +267,7 @@ class SimulationManager:
             use_llm_for_profiles: LLM으로 상세 페르소나 생성 여부
             progress_callback: 진행률 콜백 함수 (stage, progress, message)
             parallel_profile_count: 병렬 페르소나 생성 수, 기본값 3
+            validate_personas: 페르소나 스팟 테스트 검증 활성화 여부 (기본 False, 추가 토큰 비용 발생)
 
         Returns:
             SimulationState
@@ -357,8 +359,65 @@ class SimulationManager:
                 output_platform=realtime_platform  # 출력 형식
             )
             
+            # ========== 단계2.5: 페르소나 다양성 검증 ==========
+            if progress_callback:
+                progress_callback(
+                    "verifying_diversity", 0,
+                    "페르소나 다양성 검증 중...",
+                    current=0,
+                    total=1
+                )
+
+            profiles = generator.verify_and_enhance_diversity(
+                profiles=profiles,
+                similarity_threshold=0.85,
+                simulation_requirement=simulation_requirement,
+                entities=filtered.entities,
+            )
+
+            # ========== 단계2.6: 페르소나 스팟 테스트 검증 (선택적) ==========
+            if validate_personas:
+                if progress_callback:
+                    progress_callback(
+                        "validating_personas", 0,
+                        "페르소나 스팟 테스트 검증 중...",
+                        current=0,
+                        total=1
+                    )
+
+                from .persona_validator import PersonaValidator
+                validator = PersonaValidator()
+                validation_result = validator.validate_batch(
+                    profiles, simulation_requirement, sample_size=5
+                )
+                if validation_result.failed_indices:
+                    logger.info(f"스팟 테스트 불합격 {len(validation_result.failed_indices)}개, 보정 시도")
+                    profiles = validator.refine_failed_profiles(
+                        profiles,
+                        validation_result.failed_indices,
+                        validation_result.scores,
+                        simulation_requirement
+                    )
+
+                if progress_callback:
+                    progress_callback(
+                        "validating_personas", 100,
+                        f"스팟 테스트 완료 (평균 {validation_result.average_score:.0f}점)",
+                        current=1,
+                        total=1
+                    )
+
             state.profiles_count = len(profiles)
-            
+
+            # ========== 프로필에서 stance/sentiment_bias 매핑 구축 ==========
+            profile_stance_map = {}
+            for profile in profiles:
+                if profile.source_entity_uuid:
+                    profile_stance_map[profile.source_entity_uuid] = {
+                        "stance": profile.stance,
+                        "sentiment_bias": profile.sentiment_bias,
+                    }
+
             # Profile 파일 저장 (참고: Twitter는 CSV 형식, Reddit은 JSON 형식 사용)
             # Reddit은 생성 과정에서 이미 실시간 저장됨, 여기서 한 번 더 저장하여 완전성 보장
             if progress_callback:
@@ -419,7 +478,8 @@ class SimulationManager:
                 document_text=document_text,
                 entities=filtered.entities,
                 enable_twitter=state.enable_twitter,
-                enable_reddit=state.enable_reddit
+                enable_reddit=state.enable_reddit,
+                profile_stance_map=profile_stance_map,
             )
             
             if progress_callback:

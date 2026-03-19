@@ -230,25 +230,29 @@ class IPCHandler:
             
             # 执行Interview
             actions = {agent: interview_action}
-            await self.env.step(actions)
-            
+            try:
+                await asyncio.wait_for(self.env.step(actions), timeout=90.0)
+            except asyncio.TimeoutError:
+                print(f"  경고: env.step() 90초 타임아웃, agent_id={agent_id}")
+                raise
+
             # 从数据库获取结果
             result = self._get_interview_result(agent_id)
-            
+
             self.send_response(command_id, "completed", result=result)
             print(f"  Interview完成: agent_id={agent_id}")
             return True
-            
+
         except Exception as e:
             error_msg = str(e)
             print(f"  Interview失败: agent_id={agent_id}, error={error_msg}")
             self.send_response(command_id, "failed", error=error_msg)
             return False
-    
+
     async def handle_batch_interview(self, command_id: str, interviews: List[Dict]) -> bool:
         """
         处理批量采访命令
-        
+
         Args:
             interviews: [{"agent_id": int, "prompt": str}, ...]
         """
@@ -256,11 +260,11 @@ class IPCHandler:
             # 构建动作字典
             actions = {}
             agent_prompts = {}  # 记录每个agent的prompt
-            
+
             for interview in interviews:
                 agent_id = interview.get("agent_id")
                 prompt = interview.get("prompt", "")
-                
+
                 try:
                     agent = self.agent_graph.get_agent(agent_id)
                     actions[agent] = ManualAction(
@@ -270,13 +274,17 @@ class IPCHandler:
                     agent_prompts[agent_id] = prompt
                 except Exception as e:
                     print(f"  警告: 无法获取Agent {agent_id}: {e}")
-            
+
             if not actions:
                 self.send_response(command_id, "failed", error="没有有效的Agent")
                 return False
-            
+
             # 执行批量Interview
-            await self.env.step(actions)
+            try:
+                await asyncio.wait_for(self.env.step(actions), timeout=90.0)
+            except asyncio.TimeoutError:
+                print(f"  경고: env.step() 90초 타임아웃 (batch)")
+                raise
             
             # 获取所有结果
             results = {}

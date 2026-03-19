@@ -981,7 +981,7 @@ class ReportAgent:
             elif tool_name == "panorama_search":
                 # 광역 검색 - 전체 뷰 획득
                 query = parameters.get("query", "")
-                include_expired = parameters.get("include_expired", True)
+                include_expired = parameters.get("include_expired", parameters.get("includeexpired", True))
                 if isinstance(include_expired, str):
                     include_expired = include_expired.lower() in ['true', '1', 'yes']
                 result = self.graph_tools.panorama_search(
@@ -1006,8 +1006,17 @@ class ReportAgent:
             
             elif tool_name == "interview_agents":
                 # 심층 인터뷰 - 실제 OASIS 인터뷰 API를 호출하여 시뮬레이션 Agent의 답변 획득 (듀얼 플랫폼)
-                interview_topic = parameters.get("interview_topic", parameters.get("query", ""))
-                max_agents = parameters.get("max_agents", 5)
+                # 파라미터 이름 정규화 (LLM이 언더스코어 없이 생성할 수 있음)
+                interview_topic = (
+                    parameters.get("interview_topic")
+                    or parameters.get("interviewtopic")
+                    or parameters.get("query", "")
+                )
+                max_agents = (
+                    parameters.get("max_agents")
+                    or parameters.get("maxagents")
+                    or 5
+                )
                 if isinstance(max_agents, str):
                     max_agents = int(max_agents)
                 max_agents = min(max_agents, 10)
@@ -1078,6 +1087,8 @@ class ReportAgent:
         for match in re.finditer(xml_pattern, response, re.DOTALL):
             try:
                 call_data = json.loads(match.group(1))
+                # 도구 이름 정규화 (LLM이 언더스코어 없이 생성할 수 있음)
+                self._is_valid_tool_call(call_data)
                 tool_calls.append(call_data)
             except json.JSONDecodeError:
                 pass
@@ -1110,14 +1121,30 @@ class ReportAgent:
 
         return tool_calls
 
+    def _normalize_tool_name(self, name: str) -> Optional[str]:
+        """LLM이 생성한 도구 이름을 정규화 (언더스코어 제거 후 매칭)"""
+        if not name:
+            return None
+        # 정확 매칭 우선
+        if name in self.VALID_TOOL_NAMES:
+            return name
+        # 언더스코어 제거 후 소문자 매칭
+        normalized = name.replace("_", "").replace("-", "").lower()
+        for valid_name in self.VALID_TOOL_NAMES:
+            if valid_name.replace("_", "").lower() == normalized:
+                return valid_name
+        return None
+
     def _is_valid_tool_call(self, data: dict) -> bool:
         """파싱된 JSON이 유효한 도구 호출인지 검증"""
         # {"name": ..., "parameters": ...} 및 {"tool": ..., "params": ...} 두 가지 키 이름 지원
         tool_name = data.get("name") or data.get("tool")
-        if tool_name and tool_name in self.VALID_TOOL_NAMES:
-            # 키 이름을 name / parameters로 통일
+        normalized_name = self._normalize_tool_name(tool_name)
+        if normalized_name:
+            # 정규화된 이름으로 교체하고 키 이름을 name / parameters로 통일
+            data["name"] = normalized_name
             if "tool" in data:
-                data["name"] = data.pop("tool")
+                del data["tool"]
             if "params" in data and "parameters" not in data:
                 data["parameters"] = data.pop("params")
             return True

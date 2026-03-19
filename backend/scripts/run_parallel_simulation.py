@@ -333,12 +333,16 @@ class ParallelIPCHandler:
                 action_args={"prompt": prompt}
             )
             actions = {agent: interview_action}
-            await env.step(actions)
-            
+            try:
+                await asyncio.wait_for(env.step(actions), timeout=90.0)
+            except asyncio.TimeoutError:
+                print(f"  경고: {platform} env.step() 90초 타임아웃, agent_id={agent_id}")
+                raise
+
             result = self._get_interview_result(agent_id, actual_platform)
             result["platform"] = actual_platform
             return result
-            
+
         except Exception as e:
             return {"platform": platform, "error": str(e)}
     
@@ -425,11 +429,20 @@ class ParallelIPCHandler:
                 - "reddit": 只采访Reddit平台
                 - None/不指定: 每个Agent同时采访两个平台
         """
+        try:
+            return await self._handle_batch_interview_inner(command_id, interviews, platform)
+        except Exception as e:
+            print(f"  handle_batch_interview 예외: {e}")
+            self.send_response(command_id, "failed", error=str(e))
+            return False
+
+    async def _handle_batch_interview_inner(self, command_id: str, interviews: List[Dict], platform: str = None) -> bool:
+        """handle_batch_interview 내부 구현"""
         # 按平台分组
         twitter_interviews = []
         reddit_interviews = []
         both_platforms_interviews = []  # 需要同时采访两个平台的
-        
+
         for interview in interviews:
             item_platform = interview.get("platform", platform)
             if item_platform == "twitter":
@@ -466,8 +479,12 @@ class ParallelIPCHandler:
                         print(f"  警告: 无法获取Twitter Agent {agent_id}: {e}")
                 
                 if twitter_actions:
-                    await self.twitter_env.step(twitter_actions)
-                    
+                    try:
+                        await asyncio.wait_for(self.twitter_env.step(twitter_actions), timeout=90.0)
+                    except asyncio.TimeoutError:
+                        print(f"  경고: Twitter env.step() 90초 타임아웃")
+                        raise
+
                     for interview in twitter_interviews:
                         agent_id = interview.get("agent_id")
                         result = self._get_interview_result(agent_id, "twitter")
@@ -493,8 +510,12 @@ class ParallelIPCHandler:
                         print(f"  警告: 无法获取Reddit Agent {agent_id}: {e}")
                 
                 if reddit_actions:
-                    await self.reddit_env.step(reddit_actions)
-                    
+                    try:
+                        await asyncio.wait_for(self.reddit_env.step(reddit_actions), timeout=90.0)
+                    except asyncio.TimeoutError:
+                        print(f"  경고: Reddit env.step() 90초 타임아웃")
+                        raise
+
                     for interview in reddit_interviews:
                         agent_id = interview.get("agent_id")
                         result = self._get_interview_result(agent_id, "reddit")

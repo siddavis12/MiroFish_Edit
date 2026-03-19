@@ -23,9 +23,9 @@ from .chroma_store import ChromaSearchService
 logger = get_logger('mirofish.graph_builder')
 
 
-def _extract_chunk(chunk: str, ontology, existing_entities: list) -> ExtractionResult:
-    """스레드별 독립 LLM 클라이언트로 추출 (스레드 안전)"""
-    extractor = LLMEntityExtractor(llm_client=LLMClient())
+def _extract_chunk(chunk: str, ontology, existing_entities: list, use_boost: bool = False) -> ExtractionResult:
+    """스레드별 독립 LLM 클라이언트로 추출 (스레드 안전, Boost 키 분배)"""
+    extractor = LLMEntityExtractor(llm_client=LLMClient(use_boost=use_boost))
     return extractor.extract_from_text(
         text=chunk,
         ontology=ontology,
@@ -144,41 +144,40 @@ class GraphBuilderService:
                 message=f"텍스트를 {total_chunks}개 청크로 분할 완료"
             )
 
-            # 4. 각 청크에서 LLM으로 엔티티/관계 추출 후 Neo4j에 저장
+            # 4. 전체 청크를 일괄 병렬로 LLM 추출 후 Neo4j에 저장
+            #    (홀수 인덱스 워커는 Boost LLM 키 사용 → rate limit 부하 분산)
             existing_entities = []
-            for i in range(0, total_chunks, batch_size):
-                batch_chunks = chunks[i:i + batch_size]
-                batch_num = i // batch_size + 1
-                total_batches = (total_chunks + batch_size - 1) // batch_size
+            initial_snapshot = existing_entities[:100]
+            completed_count = 0
+            max_workers = min(total_chunks, 8)
 
-                progress = 20 + int((i + len(batch_chunks)) / total_chunks * 70)  # 20-90%
-                self.task_manager.update_task(
-                    task_id,
-                    progress=progress,
-                    message=f"청크 추출 중... 배치 {batch_num}/{total_batches}"
-                )
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = {
+                    pool.submit(
+                        _extract_chunk, chunk, ontology, initial_snapshot, idx % 2 == 1
+                    ): idx
+                    for idx, chunk in enumerate(chunks)
+                }
+                for future in as_completed(futures):
+                    try:
+                        extraction = future.result(timeout=180)
+                    except Exception as e:
+                        logger.error(f"청크 추출 실패 (건너뜀): {e}")
+                        completed_count += 1
+                        continue
+                    if extraction.entities or extraction.relationships:
+                        self.store.merge_extraction(graph_id, extraction)
+                        for ent in extraction.entities:
+                            name = ent.get("name", "")
+                            if name and name not in existing_entities:
+                                existing_entities.append(name)
 
-                # 배치 내 청크를 병렬로 LLM 추출 (스레드별 독립 클라이언트)
-                snapshot = existing_entities[:100]
-                with ThreadPoolExecutor(max_workers=batch_size) as pool:
-                    futures = {
-                        pool.submit(_extract_chunk, chunk, ontology, snapshot): chunk
-                        for chunk in batch_chunks
-                    }
-                    for future in as_completed(futures):
-                        try:
-                            extraction = future.result(timeout=180)
-                        except Exception as e:
-                            logger.error(f"청크 추출 실패 (건너뜀): {e}")
-                            continue
-                        if extraction.entities or extraction.relationships:
-                            self.store.merge_extraction(graph_id, extraction)
-                            for e in extraction.entities:
-                                name = e.get("name", "")
-                                if name and name not in existing_entities:
-                                    existing_entities.append(name)
-                        else:
-                            logger.warning(f"청크에서 추출 결과 없음 (배치 {batch_num})")
+                    completed_count += 1
+                    progress = 20 + int(completed_count / total_chunks * 70)
+                    self.task_manager.update_task(
+                        task_id, progress=progress,
+                        message=f"청크 추출 중... {completed_count}/{total_chunks}"
+                    )
 
             # 5. ChromaDB에 벡터 인덱스 구축
             self.task_manager.update_task(
@@ -238,41 +237,39 @@ class GraphBuilderService:
         total_chunks = len(chunks)
         ontology = self.store.get_ontology(graph_id)
         existing_entities = []
+        initial_snapshot = existing_entities[:100]
+        completed_count = 0
+        max_workers = min(total_chunks, 8)
 
-        for i in range(0, total_chunks, batch_size):
-            batch_chunks = chunks[i:i + batch_size]
-            batch_num = i // batch_size + 1
-            total_batches = (total_chunks + batch_size - 1) // batch_size
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {
+                pool.submit(
+                    _extract_chunk, chunk, ontology, initial_snapshot, idx % 2 == 1
+                ): idx
+                for idx, chunk in enumerate(chunks)
+            }
+            for future in as_completed(futures):
+                try:
+                    extraction = future.result(timeout=180)
+                except Exception as e:
+                    logger.error(f"청크 추출 실패 (건너뜀): {e}")
+                    completed_count += 1
+                    continue
+                if extraction.entities or extraction.relationships:
+                    logger.info(f"추출 결과: 엔티티 {len(extraction.entities)}개, 관계 {len(extraction.relationships)}개 → Neo4j 저장 시도")
+                    self.store.merge_extraction(graph_id, extraction)
+                    for ent in extraction.entities:
+                        name = ent.get("name", "")
+                        if name and name not in existing_entities:
+                            existing_entities.append(name)
 
-            if progress_callback:
-                progress = (i + len(batch_chunks)) / total_chunks
-                progress_callback(
-                    f"LLM 추출 중... 배치 {batch_num}/{total_batches} ({len(batch_chunks)}개 청크)",
-                    progress
-                )
-
-            snapshot = existing_entities[:100]
-            with ThreadPoolExecutor(max_workers=batch_size) as pool:
-                futures = {
-                    pool.submit(_extract_chunk, chunk, ontology, snapshot): chunk
-                    for chunk in batch_chunks
-                }
-                for future in as_completed(futures):
-                    chunk = futures[future]
-                    try:
-                        extraction = future.result(timeout=180)
-                    except Exception as e:
-                        logger.error(f"청크 추출 실패 (건너뜀, 청크 길이: {len(chunk)}): {e}")
-                        continue
-                    if extraction.entities or extraction.relationships:
-                        logger.info(f"추출 결과: 엔티티 {len(extraction.entities)}개, 관계 {len(extraction.relationships)}개 → Neo4j 저장 시도")
-                        self.store.merge_extraction(graph_id, extraction)
-                        for e in extraction.entities:
-                            name = e.get("name", "")
-                            if name and name not in existing_entities:
-                                existing_entities.append(name)
-                    else:
-                        logger.warning(f"청크에서 추출 결과 없음 (청크 길이: {len(chunk)})")
+                completed_count += 1
+                if progress_callback:
+                    progress = completed_count / total_chunks
+                    progress_callback(
+                        f"LLM 추출 중... {completed_count}/{total_chunks}",
+                        progress
+                    )
 
         # 추출 완료 후 ChromaDB 인덱스 구축
         self._build_chroma_index(graph_id)
